@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BreakMath planner</title>
+<meta name="description" content="Price every spot in your card break to hit your profit goal, then track what each break really made.">
+<meta name="theme-color" content="#05060A">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css?v=4">
+<link rel="stylesheet" href="app.css?v=1">
+</head>
+<body class="app">
+
+<header class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="./" aria-label="BreakMath home">
+      <svg class="brand-mark" viewBox="0 0 28 28" width="28" height="28" aria-hidden="true">
+        <defs>
+          <linearGradient id="foil" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#7DF3FF"/>
+            <stop offset=".4" stop-color="#9B8CFF"/>
+            <stop offset=".7" stop-color="#FF8AD4"/>
+            <stop offset="1" stop-color="#FFD58A"/>
+          </linearGradient>
+        </defs>
+        <rect x="3.5" y="6.5" width="13" height="18" rx="3" fill="none" stroke="url(#foil)" stroke-width="1.6" opacity=".55"/>
+        <rect x="11.5" y="3.5" width="13" height="18" rx="3" fill="#05060A" stroke="url(#foil)" stroke-width="1.6"/>
+        <path d="M15.5 14.5l2.5-5 2.5 5" fill="none" stroke="#F3F4F8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>BreakMath</span>
+    </a>
+    <a class="plan-pill" id="plan-pill" href="#account" data-view="account">Free</a>
+  </div>
+  <nav class="tabs" aria-label="App">
+    <div class="wrap tabs-inner">
+      <a href="#planner" data-view="planner">Planner</a>
+      <a href="#breaks" data-view="breaks">Your breaks</a>
+      <a href="#history" data-view="history">Profit history</a>
+      <a href="#account" data-view="account">Plan and data</a>
+    </div>
+  </nav>
+</header>
+
+<main class="wrap app-main">
+  <div id="view-planner"></div>
+  <div id="view-breaks" hidden></div>
+  <div id="view-history" hidden></div>
+  <div id="view-account" hidden></div>
+  <noscript><p>BreakMath needs JavaScript turned on to do the math.</p></noscript>
+</main>
+
+<footer class="footer">
+  <div class="wrap footer-inner">
+    <span>© 2026 BreakMath. Not affiliated with Whatnot.</span>
+    <nav class="footer-links" aria-label="Legal">
+      <a href="privacy.html">Privacy</a>
+      <a href="terms.html">Terms</a>
+      <a href="cookies.html">Cookies</a>
+      <a href="disclaimer.html">Disclaimer</a>
+    </nav>
+  </div>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="config.js"></script>
+<script src="analytics.js" defer></script>
+<script src="app.js" defer></script>
+</body>
+</html>

@@ -39,7 +39,7 @@ function doPost(e) {
 
 // Opening the web app address in a browser shows this, so you can tell it is live.
 function doGet() {
-  return respond({ ok: true, service: SITE_NAME + ' waitlist' });
+  return respond({ ok: true, service: SITE_NAME + ' email list' });
 }
 
 function isValidEmail(email) {
@@ -74,11 +74,11 @@ function sendThankYou(email) {
   MailApp.sendEmail({
     to: email,
     name: SITE_NAME,
-    subject: "You're on the BreakMath waitlist",
+    subject: "You're on the BreakMath list",
     body: [
-      'Thanks for joining the BreakMath waitlist.',
+      'Thanks for signing up for BreakMath updates.',
       '',
-      "BreakMath isn't open yet. You'll get an email from this address when it is, and waitlist members get in first.",
+      "You'll get an email from this address when new features ship. The planner is free to use right now at https://kmshah2.github.io/BreakMath/app.html",
       '',
       'One question, if you have a minute: how do you price your spots today? Just hit reply. Every answer gets read.',
       '',

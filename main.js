@@ -151,7 +151,20 @@ if ($('spots')) {
   render();
 }
 
-/* ---------- Waitlist ---------- */
+/* ---------- Things that depend on config.js ---------- */
+
+// The email form only appears once there is somewhere to send the emails.
+document.querySelectorAll('[data-updates]').forEach((el) => {
+  el.hidden = !WAITLIST_ENDPOINT;
+});
+
+// Pricing copy and the Get Pro button switch on once Stripe links are set.
+const SELLING = Boolean((window.BREAKMATH || {}).stripeMonthlyLink || (window.BREAKMATH || {}).stripeYearlyLink);
+document.querySelectorAll('[data-when]').forEach((el) => {
+  el.hidden = (el.dataset.when === 'selling') !== SELLING;
+});
+
+/* ---------- Email updates ---------- */
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
@@ -197,7 +210,7 @@ function markJoined() {
   document.querySelectorAll('[data-waitlist]').forEach((form) => {
     form.classList.add('is-done');
     form.querySelector('.waitlist-msg').textContent =
-      "You're on the waitlist. We'll email you when BreakMath opens.";
+      "You're on the list. We'll email you when new features ship.";
   });
 }
 
@@ -216,14 +229,14 @@ document.querySelectorAll('[data-waitlist]').forEach((form) => {
     }
     message.textContent = '';
     button.disabled = true;
-    button.textContent = 'Joining…';
+    button.textContent = 'Signing up…';
     try {
       await saveEmail(email);
       markJoined();
     } catch (err) {
-      message.textContent = "Couldn't add you to the waitlist. Check your connection and try again.";
+      message.textContent = "Couldn't sign you up. Check your connection and try again.";
       button.disabled = false;
-      button.textContent = 'Join the waitlist';
+      button.textContent = 'Get updates';
     }
   });
 });
