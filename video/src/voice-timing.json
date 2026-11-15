@@ -1,15 +1,14 @@
 {
-  "01-hook": 3.32,
-  "02-turn": 3.63,
-  "03-inputs": 2.69,
-  "04-tiers": 3.32,
-  "05-fill": 2.85,
-  "06-profit": 2.43,
-  "07-cta": 1.88,
-  "short-fees-hook": 4.13,
-  "short-fees-demo": 4.99,
-  "short-tiers-hook": 2.19,
-  "short-tiers-demo": 6.84,
-  "short-whatif-hook": 2.77,
-  "short-whatif-demo": 12.12
+  "01-hook": 4.21,
+  "02-what": 4.13,
+  "03-inputs": 3.71,
+  "04-cards": 2.27,
+  "05-profit": 2.93,
+  "06-cta": 1.88,
+  "short-fees-hook": 5.33,
+  "short-fees-demo": 5.41,
+  "short-tiers-hook": 3.55,
+  "short-tiers-demo": 6.53,
+  "short-whatif-hook": 3.97,
+  "short-whatif-demo": 12.59
 }

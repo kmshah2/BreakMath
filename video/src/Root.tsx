@@ -1,5 +1,5 @@
 import { AbsoluteFill, Composition, Folder, Still } from "remotion";
-import { Background, LogoMark } from "./parts";
+import { Background, Field, LogoMark } from "./parts";
 import { Reel, SCENE_COMPONENTS } from "./Reel";
 import { FPS, SCRIPT, SHORTS, ShortId, TOTAL_FRAMES } from "./script";
 import { Short, shortFrames } from "./shorts/Short";
@@ -64,7 +64,7 @@ export const RemotionRoot: React.FC = () => {
               id={`Scene-${scene.id}`}
               component={() => (
                 <AbsoluteFill>
-                  <Background />
+                  <Field yard={50} />
                   <Scene duration={scene.durationInFrames} />
                 </AbsoluteFill>
               )}

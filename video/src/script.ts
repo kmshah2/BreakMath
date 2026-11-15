@@ -36,4 +36,4 @@ export const SHORTS = Object.fromEntries(
   ]),
 ) as Record<ShortId, { hook: string; hookFrames: number; demoFrames: number }>;
 
-export const SHORT_CTA_FRAMES = fit("07-cta", 50);
+export const SHORT_CTA_FRAMES = fit("06-cta", 55);

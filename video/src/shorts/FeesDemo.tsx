@@ -54,8 +54,9 @@ export const FeesDemo: React.FC<{ duration: number }> = ({ duration }) => {
         style={{
           padding: 48,
           borderRadius: 48,
-          backgroundColor: C.surface,
-          border: `2px solid ${C.line}`,
+          backgroundColor: "rgba(8, 10, 16, 0.88)",
+          border: `3px solid ${C.line}`,
+          textShadow: "none",
           opacity: interpolate(frame, [2, 6], [0, 1], CLAMP),
           translate: interpolate(frame, [2, 12], ["0px 50px", "0px 0px"], { ...CLAMP, easing: EASE_OUT }),
         }}

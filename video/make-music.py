@@ -1,6 +1,6 @@
 """Synthesizes the backing track for the BreakMath videos: an original
-124 BPM loop (drums, 808 bass, plucked arpeggio, pad). No samples, no outside
-audio, so there is nothing to license.
+phonk-style loop at 132 BPM (cowbell riff, distorted 808, hard kick, fast
+hats). No samples, no outside audio, so there is nothing to license.
 
     python3 make-music.py        writes public/audio/music.wav
 """
@@ -9,11 +9,11 @@ import wave
 import numpy as np
 
 SR = 44100
-BPM = 124
+BPM = 132
 STEP = 60 / BPM / 4            # one sixteenth note, in seconds
 BARS = 16
 N = int(BARS * 16 * STEP * SR) + SR
-rng = np.random.default_rng(7)
+rng = np.random.default_rng(11)
 
 drums = np.zeros(N)
 music_l = np.zeros(N)          # everything that ducks under the kick
@@ -24,116 +24,126 @@ duck = np.ones(N)
 def place(buf, start, sound, gain=1.0):
     i = int(start * SR)
     j = min(N, i + len(sound))
-    buf[i:j] += sound[: j - i] * gain
+    if j > i:
+        buf[i:j] += sound[: j - i] * gain
 
 
 def t_of(seconds):
     return np.arange(int(seconds * SR)) / SR
 
 
+def smooth(x, width):
+    return np.convolve(x, np.ones(width) / width, mode="same")
+
+
+def semis(base, n):
+    return base * 2 ** (n / 12)
+
+
 def kick():
-    t = t_of(0.32)
-    freq = 46 + 110 * np.exp(-t * 38)
-    body = np.sin(2 * np.pi * np.cumsum(freq) / SR) * np.exp(-t * 9)
-    click = rng.standard_normal(len(t)) * np.exp(-t * 400) * 0.25
-    return body + click
+    t = t_of(0.3)
+    freq = 44 + 150 * np.exp(-t * 45)
+    body = np.sin(2 * np.pi * np.cumsum(freq) / SR) * np.exp(-t * 8)
+    click = rng.standard_normal(len(t)) * np.exp(-t * 500) * 0.3
+    return np.tanh((body + click) * 2.4)
 
 
 def clap():
-    t = t_of(0.2)
+    t = t_of(0.22)
     noise = np.diff(rng.standard_normal(len(t) + 1))
-    env = np.exp(-t * 26) + 0.6 * np.exp(-np.abs(t - 0.012) * 300) + 0.5 * np.exp(-np.abs(t - 0.024) * 300)
-    return noise * env * 0.5
+    env = np.exp(-t * 22) + sum(0.6 * np.exp(-np.abs(t - d) * 320) for d in (0.01, 0.021, 0.033))
+    return noise * env * 0.45
 
 
-def hat(length=0.04, decay=120):
+def hat(length=0.035, decay=140):
     t = t_of(length)
     noise = np.diff(np.diff(rng.standard_normal(len(t) + 2)))
-    return noise * np.exp(-t * decay) * 0.22
+    return noise * np.exp(-t * decay) * 0.2
 
 
-def bass(freq, length):
+def bass808(freq, length, slide_from=None):
     t = t_of(length)
-    glide = freq * (1 + 0.5 * np.exp(-t * 60))
-    wave_ = np.sin(2 * np.pi * np.cumsum(glide) / SR)
-    env = np.minimum(1, t * 400) * np.exp(-t * 3.2)
-    return np.tanh(wave_ * 2.2) * env
+    start = slide_from or freq * 1.5
+    glide = freq + (start - freq) * np.exp(-t * (18 if slide_from else 70))
+    tone = np.sin(2 * np.pi * np.cumsum(glide) / SR)
+    env = np.minimum(1, t * 500) * np.exp(-t * 2.4)
+    return np.tanh(tone * 4.5) * env
 
 
-def pluck(freq, length=0.28):
+def cowbell(freq, length=0.24):
     t = t_of(length)
-    tone = sum(np.sin(2 * np.pi * freq * h * t) / h * np.exp(-t * (7 + 5 * h)) for h in range(1, 7))
-    return tone * np.minimum(1, t * 900)
+    square = lambda f: np.sign(np.sin(2 * np.pi * f * t))
+    tone = square(freq) + 0.75 * square(freq * 1.504)
+    tone = smooth(tone, 5)                                  # take the harsh edge off
+    return tone * np.exp(-t * 15) * np.minimum(1, t * 2000)
 
 
-def pad(freqs, length):
+def riser(length):
     t = t_of(length)
-    tone = sum(np.sin(2 * np.pi * f * t) + 0.5 * np.sin(2 * np.pi * f * 1.005 * t) for f in freqs)
-    env = np.minimum(1, t * 3) * np.minimum(1, (length - t) * 6)
-    return tone * env / len(freqs)
+    noise = np.diff(rng.standard_normal(len(t) + 1))
+    return smooth(noise, 3) * (t / length) ** 2.5 * 0.3
 
 
-# A minor: Am, F, C, G. One chord per bar.
-CHORDS = [
-    (55.00, [220.00, 261.63, 329.63]),
-    (43.65, [174.61, 220.00, 261.63]),
-    (65.41, [261.63, 329.63, 392.00]),
-    (49.00, [196.00, 246.94, 293.66]),
-]
-ARP = [0, 1, 2, 1, 0, 2, 1, 2, 0, 1, 2, 1, 2, 0, 2, 1]
-BASS_STEPS = [0, 3, 6, 8, 11, 14]
+KEY = 369.99                      # F sharp
+RIFF_A = [0, None, 0, 3, None, 0, None, 5, 3, None, 0, None, 7, None, 5, 3]
+RIFF_B = [0, None, 0, 3, None, 0, None, 5, 8, None, 7, None, 5, None, 3, 2]
+BASS_ROOTS = [0, 0, -2, -4]       # per bar, in semitones
+BASS_STEPS = [0, 3, 6, 10, 12, 14]
+KICK_STEPS = [0, 6, 10]
 
 for bar in range(BARS):
-    root, chord = CHORDS[bar % 4]
     bar_start = bar * 16 * STEP
-    last_of_phrase = bar % 4 == 3
-    final_bar = bar == BARS - 1
+    turnaround = bar % 4 == 3
+    riff = RIFF_B if turnaround else RIFF_A
+    root = semis(KEY / 8, BASS_ROOTS[bar % 4])
+    previous = None
 
     for step in range(16):
         now = bar_start + step * STEP
-        # Kick on every beat, plus a push before the turnaround.
-        if step % 4 == 0 or (last_of_phrase and step == 14):
+
+        if step in KICK_STEPS or (turnaround and step == 14):
             place(drums, now, kick(), 1.0)
-            t = t_of(0.22)
+            t = t_of(0.2)
             i = int(now * SR)
             j = min(N, i + len(t))
-            duck[i:j] = np.minimum(duck[i:j], (0.25 + 0.75 * (t / 0.22) ** 1.5)[: j - i])
+            duck[i:j] = np.minimum(duck[i:j], (0.2 + 0.8 * (t / 0.2) ** 1.5)[: j - i])
         if step in (4, 12):
             place(drums, now, clap(), 0.9)
-        if step % 2 == 0:
-            place(drums, now, hat(), 0.9 if step % 4 == 2 else 0.6)
-        elif last_of_phrase and step >= 9:
-            place(drums, now, hat(0.03, 160), 0.5)          # sixteenth-note roll
-        if step == 14 and not last_of_phrase:
-            place(drums, now, hat(0.18, 22), 0.5)           # open hat
+
+        place(drums, now, hat(), 0.85 if step % 2 == 0 else 0.45)
+        if turnaround and step >= 12:                       # thirty-second-note roll
+            place(drums, now + STEP / 2, hat(0.025, 180), 0.5)
+        if step == 14 and not turnaround:
+            place(drums, now, hat(0.2, 20), 0.45)           # open hat
 
         if step in BASS_STEPS:
-            b = bass(root, STEP * 2.6)
-            place(music_l, now, b, 0.55)
-            place(music_r, now, b, 0.55)
+            b = bass808(root, STEP * 3.2, slide_from=previous)
+            place(music_l, now, b, 0.5)
+            place(music_r, now, b, 0.5)
+            previous = root * (1.26 if step == 10 else 1.0)
 
-        if not final_bar or step < 8:
-            octave = 2 if (step % 8) >= 4 else 1
-            p = pluck(chord[ARP[step]] * octave)
-            pan = 0.3 + 0.4 * (step % 2)
-            place(music_l, now, p, 0.16 * (1 - pan) * 2)
-            place(music_r, now, p, 0.16 * pan * 2)
-            echo = now + STEP * 3                           # dotted-eighth echo on the other side
-            place(music_l, echo, p, 0.06 * pan * 2)
-            place(music_r, echo, p, 0.06 * (1 - pan) * 2)
+        note = riff[step]
+        if note is not None:
+            c = cowbell(semis(KEY, note))
+            pan = 0.42 + 0.16 * (step % 2)
+            place(music_l, now, c, 0.2 * (1 - pan) * 2)
+            place(music_r, now, c, 0.2 * pan * 2)
+            echo = now + STEP * 3
+            place(music_l, echo, c, 0.05 * pan * 2)
+            place(music_r, echo, c, 0.05 * (1 - pan) * 2)
 
-    chord_pad = pad(chord, 16 * STEP)
-    place(music_l, bar_start, chord_pad, 0.09)
-    place(music_r, bar_start, chord_pad, 0.09)
+    if turnaround and bar < BARS - 1:
+        r = riser(4 * STEP)
+        place(music_l, bar_start + 12 * STEP, r, 0.6)
+        place(music_r, bar_start + 12 * STEP, r, 0.6)
 
-left = drums * 0.8 + music_l * duck
-right = drums * 0.8 + music_r * duck
+left = drums * 0.75 + music_l * duck
+right = drums * 0.75 + music_r * duck
 mix = np.stack([left, right], axis=1)
 
-# Fade the tail and soft-limit.
 fade = int(1.2 * SR)
 mix[-fade:] *= np.linspace(1, 0, fade)[:, None]
-mix = np.tanh(mix * 1.3)
+mix = np.tanh(mix * 1.25)
 mix = mix / np.max(np.abs(mix)) * 0.89
 
 with wave.open("public/audio/music.wav", "wb") as f:
@@ -142,4 +152,5 @@ with wave.open("public/audio/music.wav", "wb") as f:
     f.setframerate(SR)
     f.writeframes((mix * 32767).astype("<i2").tobytes())
 
-print(f"Wrote public/audio/music.wav ({len(mix) / SR:.1f}s)")
+rms = float(np.sqrt(np.mean(mix ** 2)))
+print(f"Wrote public/audio/music.wav ({len(mix) / SR:.1f}s, peak {np.max(np.abs(mix)):.2f}, rms {rms:.3f})")

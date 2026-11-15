@@ -1,6 +1,6 @@
 # BreakMath launch reel
 
-Vertical video (1080×1920, 30 fps, about 20 seconds) for TikTok and Instagram Reels, built with [Remotion](https://www.remotion.dev).
+Vertical video (1080×1920, 30 fps, about 19 seconds). The whole video is one drive down a night football field: it starts on your own 18 and reaches a "PROFIT" end zone as the profit number lands. Each team's spot is a trading card. for TikTok and Instagram Reels, built with [Remotion](https://www.remotion.dev).
 
 ## Voice
 
@@ -46,7 +46,7 @@ npx remotion render Short-fees out/breakmath-short-fees.mp4
 ## Sound
 
 - **Voice:** ElevenLabs, played back at 1.12× (`VOICE_RATE` in `src/lines.ts`).
-- **Music:** `public/audio/music.mp3`, an original 124 BPM loop synthesized by `make-music.py`. No samples, nothing to license. Volume is set in `Music` in `src/parts.tsx`.
+- **Music:** `public/audio/music.mp3`, an original 132 BPM phonk-style loop (cowbell riff, 808, fast hats) synthesized by `make-music.py`. No samples, nothing to license. Volume is set in `Music` in `src/parts.tsx`.
 - **Effects:** whoosh, impact, pop and cash sounds in `public/audio/`, made with ElevenLabs by `generate-audio.ts`.
 
 ## Where things are
@@ -54,7 +54,7 @@ npx remotion render Short-fees out/breakmath-short-fees.mp4
 - `src/lines.ts`: every spoken line and each scene's minimum length.
 - `src/script.ts`: stretches scenes to fit the recorded voice.
 - `src/scenes/`: one file per scene.
-- `src/parts.tsx`: background, foil card, headline animation, logo.
+- `src/parts.tsx`: the football field, trading cards, confetti, brand tag, sound helpers, logo.
 - `src/theme.ts`: colours, font, easing.
 
 The prices and profit shown come from BreakMath's own formula with the sample numbers ($1,200 box, $60 shipping, 12% fees, 20% profit goal).

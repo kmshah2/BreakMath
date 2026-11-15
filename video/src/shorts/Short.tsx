@@ -1,6 +1,6 @@
 import { Audio } from "@remotion/media";
-import { AbsoluteFill, Series, staticFile } from "remotion";
-import { Background, Chrome, Music, SceneShell, Sfx, SoundContext, Words } from "../parts";
+import { AbsoluteFill, interpolate, Series, staticFile, useCurrentFrame } from "remotion";
+import { AudienceTag, Chrome, Field, Music, SceneShell, Sfx, SoundContext, Words } from "../parts";
 import { Cta } from "../scenes/Cta";
 import { SHORT_CTA_FRAMES, SHORTS, ShortId, VOICE_RATE } from "../script";
 import { headline } from "../theme";
@@ -22,16 +22,24 @@ export type ShortProps = { id: ShortId; voiceover: boolean };
 export const Short: React.FC<ShortProps> = ({ id, voiceover }) => {
   const short = SHORTS[id];
   const Demo = DEMOS[id];
+  const frame = useCurrentFrame();
+  const total = shortFrames(id);
+  // One drive from midfield into the end zone, arriving for the closing call.
+  const yard = interpolate(frame, [0, total - SHORT_CTA_FRAMES, total], [52, 98, 104], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  });
   return (
     <SoundContext.Provider value={voiceover}>
       <AbsoluteFill>
-        <Background />
+        <Field yard={yard} />
         <Music />
         <Series>
           <Series.Sequence name="Hook" durationInFrames={short.hookFrames}>
             <SceneShell duration={short.hookFrames}>
               <Sfx name="impact" volume={0.8} />
-              <Words text={short.hook} style={{ ...headline, fontSize: 132 }} />
+              <AudienceTag />
+              <Words text={short.hook} start={4} style={{ ...headline, fontSize: 132 }} />
             </SceneShell>
             {voiceover ? (
               <Audio from={2} playbackRate={VOICE_RATE} src={staticFile(`voiceover/short-${id}-hook.mp3`)} />
@@ -46,7 +54,7 @@ export const Short: React.FC<ShortProps> = ({ id, voiceover }) => {
           </Series.Sequence>
           <Series.Sequence name="Call to action" durationInFrames={SHORT_CTA_FRAMES}>
             <Cta duration={SHORT_CTA_FRAMES} />
-            {voiceover ? <Audio from={2} playbackRate={VOICE_RATE} src={staticFile("voiceover/07-cta.mp3")} /> : null}
+            {voiceover ? <Audio from={2} playbackRate={VOICE_RATE} src={staticFile("voiceover/06-cta.mp3")} /> : null}
           </Series.Sequence>
         </Series>
         <Chrome />

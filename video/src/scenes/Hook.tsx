@@ -1,96 +1,71 @@
 import { Interactive, interpolate, useCurrentFrame } from "remotion";
-import { SceneShell, Sfx } from "../parts";
-import { C, CLAMP, EASE_OUT, POP } from "../theme";
+import { AudienceTag, SceneShell, Sfx, TeamCard } from "../parts";
+import { C, CLAMP, POP } from "../theme";
 
-const TEAMS = ["Kansas City", "Philadelphia", "Dallas", "Buffalo", "Detroit", "Chicago", "Denver", "Seattle"];
-// Every spot sells for $1,300 in total. Fees of 10.9% plus $0.30 a spot take
-// $144, the box and shipping cost $1,260: a $104 loss on a sold-out break.
-const SLAM = 44;
+export const SAMPLE_TEAMS = ["Kansas City", "Philadelphia", "Dallas", "Buffalo", "Chicago", "Seattle"];
+// A 6-spot break sells out for $1,300. Fees of 10.9% plus $0.30 a spot take
+// $144, and the box and shipping cost $1,260: a $104 loss.
+const SLAM = 72;
 
-// The hook: every spot sells, and the break still loses money.
+// The hook: names the audience, then shows a sold-out break losing money.
 export const Hook: React.FC<{ duration: number }> = ({ duration }) => {
   const frame = useCurrentFrame();
   return (
-    <SceneShell duration={duration} gap={40}>
-      <Sfx name="pop" at={2} volume={0.5} />
-      <Sfx name="pop" at={10} volume={0.5} />
-      <Sfx name="impact" at={SLAM} volume={0.85} />
+    <SceneShell duration={duration} gap={30}>
+      <Sfx name="whoosh" volume={0.5} />
+      <Sfx name="pop" at={16} volume={0.5} />
+      <Sfx name="pop" at={24} volume={0.5} />
+      <Sfx name="impact" at={SLAM} volume={0.9} />
+      <AudienceTag />
       <Interactive.Div
-        name="Sold out"
-        style={{
-          fontSize: 150,
-          fontWeight: 800,
-          letterSpacing: "-0.045em",
-          lineHeight: 1,
-          color: C.up,
-          opacity: interpolate(frame, [0, 3, SLAM - 2, SLAM + 3], [0, 1, 1, 0], CLAMP),
-          scale: interpolate(frame, [0, 10], [1.3, 1], { ...CLAMP, easing: POP, output: "perceptual-scale" }),
-          transformOrigin: "left center",
-        }}
+        name="Headline"
+        style={{ fontSize: 112, fontWeight: 800, letterSpacing: "-0.04em", lineHeight: 1, minHeight: 226 }}
       >
-        Sold out.
+        {frame < SLAM ? (
+          <span style={{ color: C.up, opacity: interpolate(frame, [12, 16], [0, 1], CLAMP) }}>Your break sold out.</span>
+        ) : (
+          <span
+            style={{
+              display: "inline-block",
+              transformOrigin: "left center",
+              scale: interpolate(frame, [SLAM, SLAM + 10], [1.5, 1], { ...CLAMP, easing: POP, output: "perceptual-scale" }),
+            }}
+          >
+            You still lost <span style={{ color: C.down }}>$104.</span>
+          </span>
+        )}
       </Interactive.Div>
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: 18,
-          opacity: interpolate(frame, [SLAM - 2, SLAM + 3], [1, 0.07], CLAMP),
+          gridTemplateColumns: "repeat(3, 250px)",
+          gap: 28,
+          translate: `${Math.sin(frame * 2.8) * interpolate(frame, [SLAM, SLAM + 12], [18, 0], CLAMP)}px 0px`,
         }}
       >
-        {TEAMS.map((team, i) => {
-          const sold = frame >= 3 + i * 2;
-          return (
-            <div
-              key={team}
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 6,
-                padding: "26px 30px",
-                borderRadius: 28,
-                backgroundColor: sold ? "rgba(99, 230, 169, 0.13)" : C.surface,
-                border: `3px solid ${sold ? "rgba(99, 230, 169, 0.6)" : C.line}`,
-                scale: interpolate(frame, [3 + i * 2, 9 + i * 2], [1.12, 1], { ...CLAMP, easing: EASE_OUT }),
-              }}
-            >
-              <span style={{ fontSize: 44, fontWeight: 700 }}>{team}</span>
-              <span style={{ fontSize: 38, fontWeight: 800, color: sold ? C.up : C.muted }}>{sold ? "SOLD" : "Open"}</span>
-            </div>
-          );
-        })}
+        {SAMPLE_TEAMS.map((team, i) => (
+          <div
+            key={team}
+            style={{
+              opacity: interpolate(frame, [4 + i * 2, 8 + i * 2], [0, 1], CLAMP),
+              translate: interpolate(frame, [4 + i * 2, 14 + i * 2], ["0px 80px", "0px 0px"], CLAMP),
+              rotate: `${(i % 3 - 1) * 2.5}deg`,
+            }}
+          >
+            <TeamCard team={team} width={250} stamp={interpolate(frame, [16 + i * 3, 21 + i * 3], [0, 1], CLAMP)} />
+          </div>
+        ))}
       </div>
       <Interactive.Div
-        name="Loss"
+        name="Math"
         style={{
-          position: "absolute",
-          left: 90,
-          right: 90,
-          top: 560,
-          display: "flex",
-          flexDirection: "column",
-          gap: 20,
-          opacity: interpolate(frame, [SLAM, SLAM + 3], [0, 1], CLAMP),
-          scale: interpolate(frame, [SLAM, SLAM + 12], [1.6, 1], { ...CLAMP, easing: POP, output: "perceptual-scale" }),
-          translate: `${Math.sin(frame * 2.8) * interpolate(frame, [SLAM, SLAM + 14], [20, 0], CLAMP)}px 0px`,
+          fontSize: 44,
+          fontWeight: 600,
+          color: C.text,
+          opacity: interpolate(frame, [SLAM + 6, SLAM + 12], [0, 1], CLAMP),
         }}
       >
-        <span style={{ fontSize: 110, fontWeight: 800, letterSpacing: "-0.035em" }}>Sold out. Still lost</span>
-        <span
-          style={{
-            fontSize: 310,
-            fontWeight: 800,
-            letterSpacing: "-0.06em",
-            lineHeight: 0.92,
-            color: C.down,
-            fontVariantNumeric: "tabular-nums",
-          }}
-        >
-          -$104
-        </span>
-        <span style={{ fontSize: 44, fontWeight: 600, color: C.muted, lineHeight: 1.3 }}>
-          $1,300 in sales, $144 in fees, $1,260 box
-        </span>
+        $1,300 in sales, $144 in fees, $1,260 box
       </Interactive.Div>
     </SceneShell>
   );
