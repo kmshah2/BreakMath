@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BreakMath: know your profit before you open the box</title>
+<meta name="description" content="BreakMath tells card breakers what to charge for every spot so each break hits its profit goal, then tracks what they actually made.">
+<meta name="theme-color" content="#05060A">
+<meta property="og:title" content="BreakMath: know your profit before you open the box">
+<meta property="og:description" content="Spot pricing and profit tracking for card breakers. Join the waitlist.">
+<meta property="og:type" content="website">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="#top" aria-label="BreakMath home">
+      <svg class="brand-mark" viewBox="0 0 28 28" width="28" height="28" aria-hidden="true">
+        <defs>
+          <linearGradient id="foil" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#7DF3FF"/>
+            <stop offset=".4" stop-color="#9B8CFF"/>
+            <stop offset=".7" stop-color="#FF8AD4"/>
+            <stop offset="1" stop-color="#FFD58A"/>
+          </linearGradient>
+        </defs>
+        <rect x="3.5" y="6.5" width="13" height="18" rx="3" fill="none" stroke="url(#foil)" stroke-width="1.6" opacity=".55"/>
+        <rect x="11.5" y="3.5" width="13" height="18" rx="3" fill="#05060A" stroke="url(#foil)" stroke-width="1.6"/>
+        <path d="M15.5 14.5l2.5-5 2.5 5" fill="none" stroke="#F3F4F8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>BreakMath</span>
+    </a>
+    <nav class="nav-links" aria-label="Main">
+      <a href="#how">How it works</a>
+      <a href="#pricing">Pricing</a>
+    </nav>
+    <a class="btn btn-small" href="#waitlist">Join the waitlist</a>
+  </div>
+</header>
+
+<main id="top">
+
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div class="hero-copy">
+        <h1>Know your profit before you open the box.</h1>
+        <p class="lede">BreakMath tells you what to charge for every spot so your break hits its profit goal. After the stream, it shows what you actually made.</p>
+        <form class="waitlist" data-waitlist novalidate>
+          <label class="sr-only" for="email-hero">Email address</label>
+          <input id="email-hero" name="email" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com" required>
+          <button class="btn" type="submit">Join the waitlist</button>
+          <p class="waitlist-msg" role="status"></p>
+        </form>
+        <p class="fine">Free plan at launch. No card needed. By joining you agree to the <a href="terms.html">Terms</a> and <a href="privacy.html">Privacy Policy</a>.</p>
+      </div>
+
+      <div class="planner-wrap">
+        <section class="planner foil" aria-labelledby="planner-title">
+          <header class="planner-head">
+            <div>
+              <h2 id="planner-title">Football hobby box</h2>
+              <p>Sample break with 8 spots. Change any number.</p>
+            </div>
+          </header>
+
+          <div class="fields">
+            <label class="field">
+              <span>Box cost</span>
+              <span class="input"><i>$</i><input id="in-box" type="text" inputmode="decimal" value="1200"></span>
+            </label>
+            <label class="field">
+              <span>Shipping and supplies</span>
+              <span class="input"><i>$</i><input id="in-ship" type="text" inputmode="decimal" value="60"></span>
+            </label>
+            <label class="field">
+              <span>Platform fees</span>
+              <span class="input"><input id="in-fee" type="text" inputmode="decimal" value="12"><i>%</i></span>
+            </label>
+            <label class="field">
+              <span>Profit goal</span>
+              <span class="input"><input id="in-target" type="text" inputmode="decimal" value="20"><i>%</i></span>
+            </label>
+          </div>
+
+          <div class="spots-head">
+            <h3>Spot prices</h3>
+            <p>Tap a tier to change it</p>
+          </div>
+          <ul class="spots" id="spots"></ul>
+
+          <dl class="totals">
+            <div>
+              <dt>List all spots for</dt>
+              <dd id="out-list">$0</dd>
+            </div>
+            <div>
+              <dt>Profit if every spot sells</dt>
+              <dd id="out-profit" class="up">$0</dd>
+            </div>
+          </dl>
+
+          <div class="whatif">
+            <label for="in-disc">If spots sell <strong id="out-disc">15%</strong> below list, you make <strong id="out-disc-profit" class="up">$0</strong></label>
+            <input id="in-disc" type="range" min="0" max="40" step="1" value="15">
+            <p id="out-safe"></p>
+          </div>
+
+          <p class="planner-note">Estimates from your own numbers, not advice or a guarantee of profit. <a href="disclaimer.html">Disclaimer</a></p>
+        </section>
+      </div>
+    </div>
+  </section>
+
+  <section class="why">
+    <div class="wrap">
+      <h2 class="statement">Whatnot runs the break. BreakMath makes sure it makes money.</h2>
+      <div class="reasons">
+        <div>
+          <h3>Teams aren't worth the same</h3>
+          <p>One flat price leaves money on the table for the best teams and leaves the weak spots unsold.</p>
+        </div>
+        <div>
+          <h3>Fees come out of every sale</h3>
+          <p>Platform and payment fees are taken from the sale price, so they're easy to underestimate when you price by feel.</p>
+        </div>
+        <div>
+          <h3>Margins are thin</h3>
+          <p>One badly priced break can wipe out the profit from several good ones.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="how" id="how">
+    <div class="wrap">
+      <h2>From new case to priced spot list in two minutes</h2>
+      <ol class="steps">
+        <li>
+          <h3>Enter your numbers</h3>
+          <p>Box cost, shipping, fees and the profit you want. Every number is yours. BreakMath never guesses card prices.</p>
+        </li>
+        <li>
+          <h3>Rate each team</h3>
+          <p>Mark every spot Top, Mid or Low. Prices update with each tap, and you can see how far below list you can sell before losing money.</p>
+        </li>
+        <li>
+          <h3>Copy your spot list</h3>
+          <p>Paste the prices into your listing and go live knowing what the break will make.</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="history">
+    <div class="wrap history-grid">
+      <div>
+        <h2>See what each break really made</h2>
+        <p class="lede">After the stream, enter what the spots sold for. BreakMath shows real profit next to the plan, by break, by product and by month, so you stop running products that lose money.</p>
+        <p class="lede">At tax time, export every break as a CSV.</p>
+      </div>
+      <div class="ledger">
+        <table>
+          <caption>Sample numbers</caption>
+          <thead>
+            <tr><th scope="col">Break</th><th scope="col">Planned</th><th scope="col">Actual</th></tr>
+          </thead>
+          <tbody>
+            <tr><th scope="row">Football hobby case</th><td>$251</td><td class="up">$238</td></tr>
+            <tr><th scope="row">Baseball jumbo box</th><td>$140</td><td class="up">$171</td></tr>
+            <tr><th scope="row">Basketball mega box</th><td>$90</td><td class="down">-$42</td></tr>
+            <tr><th scope="row">Football blaster case</th><td>$65</td><td class="up">$58</td></tr>
+          </tbody>
+          <tfoot>
+            <tr><th scope="row">This month</th><td>$546</td><td class="up">$425</td></tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="pricing" id="pricing">
+    <div class="wrap">
+      <h2>One better-priced break should pay for a year</h2>
+      <div class="plans">
+        <div class="plan">
+          <h3>Free</h3>
+          <p class="price">$0</p>
+          <ul>
+            <li>Spot price planner</li>
+            <li>What-if slider</li>
+            <li>3 saved breaks a month</li>
+          </ul>
+        </div>
+        <div class="plan foil">
+          <h3>Pro</h3>
+          <p class="price">$15<small> a month, or $119 a year</small></p>
+          <ul>
+            <li>Unlimited saved breaks</li>
+            <li>Reusable team templates</li>
+            <li>Profit history by break, product and month</li>
+            <li>Tax export</li>
+          </ul>
+        </div>
+      </div>
+      <p class="fine">Planned launch pricing. People on the waitlist hear first if it changes.</p>
+    </div>
+  </section>
+
+  <section class="closing" id="waitlist">
+    <div class="wrap">
+      <h2>Stop guessing what to charge for spots.</h2>
+      <p class="lede">BreakMath isn't open yet. Leave your email and you'll get access when it is.</p>
+      <form class="waitlist" data-waitlist novalidate>
+        <label class="sr-only" for="email-closing">Email address</label>
+        <input id="email-closing" name="email" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com" required>
+        <button class="btn" type="submit">Join the waitlist</button>
+        <p class="waitlist-msg" role="status"></p>
+      </form>
+      <p class="fine">By joining you agree to the <a href="terms.html">Terms</a> and <a href="privacy.html">Privacy Policy</a>. Unsubscribe any time.</p>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="wrap footer-inner">
+    <span>© 2026 BreakMath. Not affiliated with Whatnot.</span>
+    <nav class="footer-links" aria-label="Legal">
+      <a href="privacy.html">Privacy</a>
+      <a href="terms.html">Terms</a>
+      <a href="cookies.html">Cookies</a>
+      <a href="disclaimer.html">Disclaimer</a>
+    </nav>
+  </div>
+</footer>
+
+<script src="config.js"></script>
+<script src="analytics.js" defer></script>
+<script src="main.js" defer></script>
+</body>
+</html>
