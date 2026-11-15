@@ -169,21 +169,15 @@ h3 {
 
 /* Foil edge: the one loud thing on the page */
 
-.foil {
-  position: relative;
-}
-
-.foil::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  padding: 1.5px;
-  border-radius: inherit;
-  background: conic-gradient(from var(--foil-angle), var(--foil));
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
-  pointer-events: none;
+/* Drawn as a two-layer background (card colour inside, foil in the border
+   area) rather than a masked overlay, so no browser can paint it over the
+   card's content. */
+.planner.foil,
+.plan.foil {
+  border: 1.5px solid transparent;
+  background:
+    linear-gradient(var(--surface), var(--surface)) padding-box,
+    conic-gradient(from var(--foil-angle), var(--foil)) border-box;
   animation: foil-turn 16s linear infinite;
 }
 
@@ -866,7 +860,8 @@ input[type="range"]::-moz-range-thumb {
   .hero-copy > *,
   .planner-wrap,
   .planner-wrap::after,
-  .foil::before {
+  .planner.foil,
+  .plan.foil {
     animation: none;
   }
 }
