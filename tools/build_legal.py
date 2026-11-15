@@ -64,6 +64,8 @@ TEMPLATE = '''<!doctype html>
   </div>
 </footer>
 
+<script>window.va = window.va || function () {{ (window.vaq = window.vaq || []).push(arguments); }};</script>
+<script defer src="/_vercel/insights/script.js"></script>
 <script src="config.js"></script>
 <script src="analytics.js" defer></script>
 </body>
@@ -76,7 +78,7 @@ PAGES = {}
 
 PAGES['privacy.html'] = ('Privacy Policy', 'What BreakMath collects, why, and the choices you have.', f'''
 <div class="summary">
-<p><strong>The short version.</strong> The breaks you plan and save stay in your own browser, not on our servers. If you pay for Pro, Stripe handles the payment and we never see your card number. If you give us your email, we use it to send product updates. We count visits without cookies. We don't sell your information and we don't run advertising trackers.</p>
+<p><strong>The short version.</strong> When you create an account we store your email address and the breaks you save, so you can use them on any device. If you pay for Pro, Stripe handles the payment and we never see your card number. We count visits without cookies. We don't sell your information and we don't run advertising trackers.</p>
 </div>
 
 <h2>1. Who we are</h2>
@@ -85,26 +87,29 @@ PAGES['privacy.html'] = ('Privacy Policy', 'What BreakMath collects, why, and th
 <h2>2. Information we collect</h2>
 <h3>Information you give us</h3>
 <ul>
+<li><strong>Account details</strong>, when you create an account: your email address and a password. Passwords are stored in scrambled (hashed) form by our sign-in provider, Supabase; we cannot read them.</li>
+<li><strong>Your breaks</strong>: everything you save in the app, including products, costs, fees, team lists, prices, results and profit history, is stored with your account.</li>
 <li><strong>Email address</strong>, when you sign up for product updates. We save it with the time you signed up and the ad campaign or website that sent you to us.</li>
 <li><strong>Payment and subscription details</strong>, when you buy Pro. Stripe collects your name, email address, billing country and card details. We can see your name, email, plan, payment history and the last four digits and brand of your card in our Stripe account. We never receive or store your full card number.</li>
 <li><strong>Anything you send us</strong>, when you email us, including your email address and the contents of your message.</li>
 </ul>
 <h3>Information collected automatically</h3>
 <ul>
-<li><strong>Visit statistics.</strong> We use GoatCounter, a privacy-focused analytics service that does not use cookies. It records the page viewed, the referring site or campaign, browser and operating system, screen size, and country or region. It does not keep your full IP address and does not build a profile of you across sites. It also counts sign-ups and upgrades, without receiving any email address.</li>
-<li><strong>Server logs.</strong> This site is hosted on GitHub Pages. GitHub may log technical details of requests, including IP addresses, for security and to operate its service.</li>
+<li><strong>Visit statistics.</strong> We use Vercel Web Analytics, and may also use GoatCounter. Both are privacy-focused and do not use cookies. They record the page viewed, the referring site or campaign, browser and operating system, device type, and country or region. They do not build a profile of you across sites.</li>
+<li><strong>Server logs.</strong> This site is hosted on Vercel, and accounts and saved breaks are held by Supabase. Both may log technical details of requests, including IP addresses, for security and to operate their services.</li>
 <li><strong>Fonts.</strong> The site loads its typeface from Google Fonts, so your browser sends a request, including your IP address, to Google.</li>
 </ul>
 <h3>Information that stays on your device</h3>
 <ul>
-<li><strong>Your breaks.</strong> Everything you enter in the app, including products, costs, fees, team lists, prices, results and profit history, is stored in your browser's local storage on your device. It is not sent to us and we cannot see it, recover it or move it between devices. Clearing your browser data deletes it, so use the backup option in the app.</li>
-<li><strong>Your plan.</strong> Whether Pro is unlocked is also stored in your browser.</li>
+<li><strong>Unsaved work.</strong> The break you are still editing is kept in your browser's local storage until you save it, along with your sign-in session.</li>
+<li><strong>If accounts are switched off.</strong> On a version of BreakMath without sign-in, everything you enter stays in your browser and is not sent to us.</li>
 </ul>
 <h3>Information we do not collect</h3>
 <p>We do not collect precise location, government identifiers or sensitive personal information. We do not use advertising pixels or cross-site tracking.</p>
 
 <h2>3. How we use information</h2>
 <ul>
+<li>To run your account, save your breaks and show them to you on any device.</li>
 <li>To provide Pro, take payment through Stripe, and handle billing questions, cancellations and refunds.</li>
 <li>To send a confirmation email when you sign up for updates, and occasional emails about new features, pricing and requests for feedback.</li>
 <li>To reply when you contact us.</li>
@@ -115,12 +120,12 @@ PAGES['privacy.html'] = ('Privacy Policy', 'What BreakMath collects, why, and th
 <p>We do not use your information for automated decisions that have legal or similarly significant effects on you.</p>
 
 <h2>4. Legal bases (European Economic Area, United Kingdom and Switzerland)</h2>
-<p>Where those laws apply, we rely on: <strong>performance of a contract</strong> to provide Pro and take payment; your <strong>consent</strong> for update emails, which you can withdraw at any time; our <strong>legitimate interests</strong> in measuring and securing the site and answering messages; and <strong>legal obligations</strong> where the law requires us to keep or disclose information.</p>
+<p>Where those laws apply, we rely on: <strong>performance of a contract</strong> to run your account, provide the app and Pro, and take payment; your <strong>consent</strong> for update emails, which you can withdraw at any time; our <strong>legitimate interests</strong> in measuring and securing the site and answering messages; and <strong>legal obligations</strong> where the law requires us to keep or disclose information.</p>
 
 <h2>5. How we share information</h2>
 <p>We do not sell personal information, and we do not share it for cross-context behavioral advertising. We share it only as follows:</p>
 <ul>
-<li><strong>Service providers</strong> that help us run the site and act on our instructions: website hosting (GitHub), payments (Stripe), analytics (GoatCounter), fonts (Google), and Google (Google Sheets and Gmail), which we use to store email sign-ups and send emails.</li>
+<li><strong>Service providers</strong> that help us run the site and act on our instructions: hosting and analytics (Vercel), accounts and database (Supabase), payments (Stripe), analytics (GoatCounter), fonts (Google), and Google (Google Sheets and Gmail), which we use to store email sign-ups and send emails.</li>
 <li><strong>Legal reasons</strong>, if we believe disclosure is required by law or legal process, or needed to protect the rights, property or safety of BreakMath, our users or others.</li>
 <li><strong>Business changes</strong>, if BreakMath is reorganized, merged or sold. The recipient would have to honor this policy or tell you about any change.</li>
 <li><strong>With your permission</strong>, in any other case.</li>
@@ -130,7 +135,7 @@ PAGES['privacy.html'] = ('Privacy Policy', 'What BreakMath collects, why, and th
 <ul>
 <li><strong>Update emails list:</strong> until you unsubscribe or ask us to delete your address.</li>
 <li><strong>Payment records:</strong> as long as you subscribe and afterwards for as long as tax and accounting rules require. Stripe keeps its own records under its privacy policy.</li>
-<li><strong>Your breaks:</strong> they stay in your browser until you delete them or clear your browser data.</li>
+<li><strong>Your account and saved breaks:</strong> until you delete them or ask us to delete your account. Email us and we will delete your account and everything saved in it.</li>
 <li><strong>Messages you send us:</strong> as long as needed to handle your request and keep a record of it.</li>
 <li><strong>Visit statistics:</strong> kept in aggregated form that does not identify you.</li>
 </ul>
@@ -175,7 +180,7 @@ PAGES['privacy.html'] = ('Privacy Policy', 'What BreakMath collects, why, and th
 
 PAGES['terms.html'] = ('Terms of Service', 'The terms and conditions for using the BreakMath website, app and paid plans.', f'''
 <div class="summary">
-<p><strong>The short version.</strong> BreakMath does math on numbers you enter and gives estimates. You decide your own prices and run your own business, and BreakMath is not responsible for money you lose. Your breaks are saved in your own browser, so keep a backup. Pro renews until you cancel, and you can cancel any time. These Terms of Service are also our terms and conditions of use.</p>
+<p><strong>The short version.</strong> BreakMath does math on numbers you enter and gives estimates. You decide your own prices and run your own business, and BreakMath is not responsible for money you lose. You need a free account to use the app. Pro renews until you cancel, and you can cancel any time. These Terms of Service are also our terms and conditions of use.</p>
 </div>
 
 <h2>1. Agreement to these terms</h2>
@@ -185,9 +190,9 @@ PAGES['terms.html'] = ('Terms of Service', 'The terms and conditions for using t
 <p>You must be at least 18 years old, or the age of legal majority where you live, to use the Site. By using the Site you confirm that you meet this requirement and that you can enter into a binding agreement.</p>
 
 <h2>3. What the Site is</h2>
-<p>BreakMath is a tool for pricing break spots and tracking profit. It is in early access: it is new, it may contain errors, and features may be added, changed or removed. The app runs in your web browser.</p>
-<h3>Your data is stored on your device</h3>
-<p>Breaks, templates, results and your plan status are saved in your browser's local storage, not on our servers. We cannot see, recover or transfer that data. It can be lost if you clear your browser data, use private browsing, switch browsers or devices, or if your browser removes it. <strong>You are responsible for keeping your own backup</strong> using the backup option in the app, and BreakMath is not liable for lost data.</p>
+<p>BreakMath is a tool for pricing break spots and tracking profit. It is in early access: it is new, it may contain errors, and features may be added, changed or removed. The app runs in your web browser and needs an account.</p>
+<h3>Accounts and your data</h3>
+<p>You need an account to use the app. Keep your password private; you are responsible for what happens under your account. Give an email address that belongs to you, and tell us if you think someone else has used your account. Breaks, templates and results you save are stored with your account on our service providers' servers. We work to keep that data safe and available, but we do not guarantee it will never be lost, so <strong>keep your own copy of anything important</strong> using the backup and export options in the app. You can delete your data in the app, or email us to delete your account.</p>
 
 <h2>4. Email updates</h2>
 <ul>
@@ -218,7 +223,7 @@ PAGES['terms.html'] = ('Terms of Service', 'The terms and conditions for using t
 <li><strong>Price changes.</strong> We may change prices. For existing subscribers a change takes effect at the next renewal, and we will give at least 30 days' notice by email so you can cancel first.</li>
 <li><strong>Taxes.</strong> Prices do not include taxes unless stated. Any applicable tax is added at checkout.</li>
 <li><strong>Payment processing.</strong> Payments are processed by Stripe under Stripe's own terms and privacy policy. We do not receive or store your full card details.</li>
-<li><strong>How Pro is unlocked.</strong> Pro is unlocked in the browser you paid from. To use it in another browser or on another device, open the link on your payment confirmation page there. If you cannot unlock Pro, email us.</li>
+<li><strong>How Pro works.</strong> Pro is attached to the account you were signed in to when you paid, and works on any device you sign in on. It can take a minute to switch on after payment. If it does not, email us.</li>
 <li><strong>Failed payments.</strong> If a payment fails or is reversed, we may suspend or end Pro.</li>
 </ul>
 
@@ -293,14 +298,15 @@ PAGES['cookies.html'] = ('Cookie Policy', 'How BreakMath uses cookies and simila
 <p>Cookies are small files a website saves in your browser. This site does not set any, for advertising, analytics or anything else.</p>
 
 <h2>2. Analytics without cookies</h2>
-<p>We use GoatCounter to count visits. It does not use cookies or store anything on your device, and it does not follow you across other websites. What it records is described in our <a href="privacy.html">Privacy Policy</a>.</p>
+<p>We use Vercel Web Analytics, and may use GoatCounter, to count visits. Neither uses cookies or stores anything on your device, and neither follows you across other websites. What it records is described in our <a href="privacy.html">Privacy Policy</a>.</p>
 
 <h2>3. Browser storage</h2>
-<p>Browsers offer "local storage", which works like a cookie but is never sent to a server. The BreakMath app uses it to save your breaks, templates, results and plan status on your own device. This is necessary for the app to work. Clearing it in your browser's site data settings deletes your saved breaks, so download a backup in the app first.</p>
+<p>Browsers offer "local storage", which works like a cookie but is never sent to a server. The BreakMath app uses it to keep you signed in and to hold the break you are still editing. This is necessary for the app to work. Clearing it in your browser's site data settings signs you out; breaks you have saved to your account are not affected.</p>
 
 <h2>4. Other services your browser contacts</h2>
 <ul>
-<li><strong>GitHub Pages</strong> hosts the site and receives the technical details of each request, including your IP address.</li>
+<li><strong>Vercel</strong> hosts the site, counts visits without cookies, and receives the technical details of each request, including your IP address.</li>
+<li><strong>Supabase</strong> handles sign-in and stores your account and saved breaks.</li>
 <li><strong>Google Fonts</strong> delivers the typeface, so your browser sends a request, including your IP address, to Google.</li>
 <li><strong>GoatCounter</strong> receives the visit information described above.</li>
 <li><strong>Google</strong> receives your email address if you sign up for updates, because sign-ups are stored in Google Sheets.</li>
@@ -312,7 +318,7 @@ PAGES['cookies.html'] = ('Cookie Policy', 'How BreakMath uses cookies and simila
 <p>You can block or delete cookies and site data in your browser settings, and you can use a content blocker to stop analytics. The site works the same either way.</p>
 
 <h2>6. Changes</h2>
-<p>If we start using cookies, for example for sign-in, we will update this page first and ask for consent where the law requires it.</p>
+<p>If we start using cookies we will update this page first and ask for consent where the law requires it.</p>
 
 <h2>7. Contact</h2>
 <p>Questions: {MAIL}.</p>
@@ -345,7 +351,7 @@ PAGES['disclaimer.html'] = ('Disclaimer', 'BreakMath gives estimates, not advice
 <p>We work to keep the math and the information on this site correct, but it is provided "as is" and may contain errors or be out of date. Prices are rounded, which can move results slightly away from your goal. Check any number that matters before you rely on it.</p>
 
 <h2>8. Early access</h2>
-<p>BreakMath is new and in early access. It may contain errors, and features, plans and prices may change. Your saved breaks are stored in your own browser and can be lost, so keep a backup.</p>
+<p>BreakMath is new and in early access. It may contain errors, and features, plans and prices may change. Keep your own backup of anything important.</p>
 
 <h2>9. Following the rules</h2>
 <p>You are responsible for following the law and the rules of any platform you sell on, including rules about breaks, giveaways, consumer protection and taxes. BreakMath does not review your breaks and does not confirm that they comply.</p>

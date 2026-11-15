@@ -15,6 +15,11 @@
   // then nobody could pay, so nothing is locked.
   const SELLING = Boolean(CFG.stripeMonthlyLink || CFG.stripeYearlyLink);
 
+  // Accounts are on once a Supabase project is set in config.js. Then people
+  // sign in before using the app, breaks are saved to their account instead of
+  // this browser, and the free limit is enforced per account on the server.
+  const AUTH = Boolean(CFG.supabaseUrl && CFG.supabaseAnonKey);
+
   const PRESETS = {
     'Football · 32 teams': ['Arizona', 'Atlanta', 'Baltimore', 'Buffalo', 'Carolina', 'Chicago', 'Cincinnati', 'Cleveland', 'Dallas', 'Denver', 'Detroit', 'Green Bay', 'Houston', 'Indianapolis', 'Jacksonville', 'Kansas City', 'Las Vegas', 'LA Chargers', 'LA Rams', 'Miami', 'Minnesota', 'New England', 'New Orleans', 'NY Giants', 'NY Jets', 'Philadelphia', 'Pittsburgh', 'San Francisco', 'Seattle', 'Tampa Bay', 'Tennessee', 'Washington'],
     'Basketball · 30 teams': ['Atlanta', 'Boston', 'Brooklyn', 'Charlotte', 'Chicago', 'Cleveland', 'Dallas', 'Denver', 'Detroit', 'Golden State', 'Houston', 'Indiana', 'LA Clippers', 'LA Lakers', 'Memphis', 'Miami', 'Milwaukee', 'Minnesota', 'New Orleans', 'New York', 'Oklahoma City', 'Orlando', 'Philadelphia', 'Phoenix', 'Portland', 'Sacramento', 'San Antonio', 'Toronto', 'Utah', 'Washington'],
@@ -101,7 +106,10 @@
 
   function saveStore() {
     try {
-      localStorage.setItem(STORE_KEY, JSON.stringify(store));
+      // With accounts on, only the unsaved draft stays in the browser; breaks
+      // and templates live in the account so a shared computer never mixes them.
+      localStorage.setItem(STORE_KEY, JSON.stringify(AUTH ? { v: 1, draft: store.draft } : store));
+      if (AUTH) scheduleSync();
       return true;
     } catch (err) {
       toast("Couldn't save. This browser is blocking storage or it is full.");
@@ -110,7 +118,155 @@
   }
 
   let store = loadStore();
-  const isPro = () => store.pro || !SELLING;
+  let account = null; // { id, email, pro } once signed in
+  const isPro = () => (AUTH ? Boolean(account && account.pro) : store.pro) || !SELLING;
+
+  /* ---------- Accounts and cloud saves ---------- */
+
+  let db = null;
+  const synced = { breaks: new Map(), templates: new Map() };
+  let syncTimer = null;
+
+  async function connect() {
+    const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm');
+    db = createClient(CFG.supabaseUrl, CFG.supabaseAnonKey);
+  }
+
+  async function loadAccount(user) {
+    const [profile, breaks, templates] = await Promise.all([
+      db.from('profiles').select('pro').eq('id', user.id).maybeSingle(),
+      db.from('breaks').select('id, data').order('created_at', { ascending: false }),
+      db.from('templates').select('id, data').order('created_at', { ascending: false }),
+    ]);
+    if (breaks.error || templates.error) throw breaks.error || templates.error;
+    account = { id: user.id, email: user.email, pro: Boolean(profile.data && profile.data.pro) };
+    store.breaks = breaks.data.map((row) => ({ ...row.data, id: row.id }));
+    store.templates = templates.data.map((row) => ({ ...row.data, id: row.id }));
+    synced.breaks = new Map(store.breaks.map((b) => [b.id, JSON.stringify(b)]));
+    synced.templates = new Map(store.templates.map((t) => [t.id, JSON.stringify(t)]));
+  }
+
+  function scheduleSync() {
+    if (!account) return;
+    clearTimeout(syncTimer);
+    syncTimer = setTimeout(syncNow, 500);
+  }
+
+  // Send whatever changed since the last sync: new and edited rows are
+  // upserted, rows that are gone locally are deleted.
+  async function syncNow() {
+    if (!account || !db) return;
+    for (const table of ['breaks', 'templates']) {
+      const local = new Map(store[table].map((item) => [item.id, item]));
+      for (const [id, item] of local) {
+        const json = JSON.stringify(item);
+        if (synced[table].get(id) === json) continue;
+        const isNew = !synced[table].has(id);
+        const { error } = await db.from(table).upsert({ id, user_id: account.id, data: item });
+        if (!error) {
+          synced[table].set(id, json);
+        } else if (isNew && error.code === '42501') {
+          // The server refused the row: this account is over its free limit.
+          store[table] = store[table].filter((x) => x.id !== id);
+          if (table === 'breaks') {
+            upgradePrompt(`The free plan saves ${FREE_BREAKS_PER_MONTH} breaks a month. Pro saves as many as you run.`);
+          } else {
+            upgradePrompt('Saving your own team templates is part of Pro.');
+          }
+        } else {
+          toast("Couldn't save to your account. Check your connection; your changes are still on screen.");
+        }
+      }
+      for (const id of [...synced[table].keys()]) {
+        if (local.has(id)) continue;
+        const { error } = await db.from(table).delete().eq('id', id);
+        if (!error) synced[table].delete(id);
+      }
+    }
+  }
+
+  async function refreshPlan() {
+    if (!account) return;
+    const { data } = await db.from('profiles').select('pro').eq('id', account.id).maybeSingle();
+    account.pro = Boolean(data && data.pro);
+    setPill();
+  }
+
+  function setPill() {
+    $('#plan-pill').textContent = !SELLING ? 'Early access' : isPro() ? 'Pro' : 'Free';
+  }
+
+  function signedOutView(mode = 'signup', message = '') {
+    document.body.classList.add('signed-out');
+    VIEWS.forEach((v) => {
+      $(`#view-${v}`).hidden = true;
+    });
+    const titles = { signup: 'Create your free account', signin: 'Sign in to BreakMath', reset: 'Reset your password', newpass: 'Choose a new password' };
+    const buttons = { signup: 'Create free account', signin: 'Sign in', reset: 'Email me a reset link', newpass: 'Save new password' };
+    $('#view-auth').hidden = false;
+    $('#view-auth').innerHTML = `
+      <form class="auth panel" data-form="auth" data-mode="${mode}" novalidate>
+        <h1>${titles[mode]}</h1>
+        ${mode === 'signup' ? `<p class="muted">Price every spot in your break and track what each one really made. Free plan saves ${FREE_BREAKS_PER_MONTH} breaks a month. No card needed.</p>` : ''}
+        ${mode === 'reset' ? '<p class="muted">Enter the email you signed up with and we will send a link to set a new password.</p>' : ''}
+        ${mode !== 'newpass' ? `<label class="field"><span>Email</span>
+          <span class="input"><input name="email" type="email" inputmode="email" autocomplete="email" required></span></label>` : ''}
+        ${mode !== 'reset' ? `<label class="field"><span>${mode === 'newpass' ? 'New password' : 'Password'}</span>
+          <span class="input"><input name="password" type="password" minlength="8" autocomplete="${mode === 'signin' ? 'current-password' : 'new-password'}" required></span></label>` : ''}
+        ${mode === 'signup' || mode === 'newpass' ? '<p class="muted small">At least 8 characters.</p>' : ''}
+        <p class="auth-msg" role="status">${esc(message)}</p>
+        <button class="btn" type="submit">${buttons[mode]}</button>
+        <div class="auth-links">
+          ${mode === 'signup' ? '<button type="button" data-action="auth-mode" data-mode="signin">I already have an account</button>' : ''}
+          ${mode === 'signin' ? '<button type="button" data-action="auth-mode" data-mode="signup">Create a free account</button><button type="button" data-action="auth-mode" data-mode="reset">Forgot password?</button>' : ''}
+          ${mode === 'reset' ? '<button type="button" data-action="auth-mode" data-mode="signin">Back to sign in</button>' : ''}
+        </div>
+        ${mode === 'signup' ? '<p class="muted small">By creating an account you agree to the <a href="terms.html">Terms</a> and <a href="privacy.html">Privacy Policy</a>.</p>' : ''}
+      </form>`;
+  }
+
+  async function submitAuth(form) {
+    const mode = form.dataset.mode;
+    const data = new FormData(form);
+    const email = String(data.get('email') || '').trim();
+    const password = String(data.get('password') || '');
+    const say = (text) => {
+      $('.auth-msg', form).textContent = text;
+    };
+    if (mode !== 'newpass' && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return say('Enter a valid email address.');
+    if (mode !== 'reset' && password.length < 8) return say('Use a password with at least 8 characters.');
+    const button = $('button[type="submit"]', form);
+    button.disabled = true;
+    say('');
+    let result;
+    if (mode === 'signup') result = await db.auth.signUp({ email, password });
+    else if (mode === 'signin') result = await db.auth.signInWithPassword({ email, password });
+    else if (mode === 'reset') result = await db.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname });
+    else result = await db.auth.updateUser({ password });
+    button.disabled = false;
+    if (result.error) return say(result.error.message);
+    if (mode === 'reset') return say('Check your email for the reset link.');
+    if (mode === 'signup' && !result.data.session) return say('Check your email to confirm your account, then sign in.');
+    if (mode === 'newpass') toast('Password changed.');
+    // Signing in fires onAuthStateChange, which opens the app.
+  }
+
+  async function openApp(user) {
+    try {
+      await loadAccount(user);
+    } catch (err) {
+      signedOutView('signin', "Couldn't load your account. Check your connection and try again.");
+      return;
+    }
+    document.body.classList.remove('signed-out');
+    $('#view-auth').hidden = true;
+    setPill();
+    show(location.hash.slice(1) || 'planner');
+    if (window.goatcounter && window.goatcounter.count) {
+      window.goatcounter.count({ path: 'signed-in', title: 'Signed in', event: true });
+    }
+  }
+
 
   /* ---------- The pricing math ---------- */
 
@@ -179,6 +335,7 @@
   let liveBreakId = null;
 
   function show(view) {
+    if (AUTH && !account) return; // nothing to show until someone is signed in
     if (!VIEWS.includes(view)) view = 'planner';
     VIEWS.forEach((v) => {
       $(`#view-${v}`).hidden = v !== view;
@@ -774,25 +931,28 @@
     const plan = !SELLING
       ? `<p class="plan-state">Early access</p>
          <p>Everything is unlocked and free while BreakMath is in early access. Paid plans are not on sale yet.</p>`
-      : store.pro
+      : isPro()
         ? `<p class="plan-state up">Pro</p>
-           <p>Pro is unlocked in this browser. To use it on another device, open the link on your payment confirmation page there.</p>
+           <p>${AUTH ? 'Pro is active on your account, on every device you sign in on.' : 'Pro is unlocked in this browser. To use it on another device, open the link on your payment confirmation page there.'}</p>
            ${CFG.stripePortalLink ? `<a class="btn-ghost" href="${esc(CFG.stripePortalLink)}" target="_blank" rel="noopener">Manage or cancel subscription</a>` : ''}`
         : `<p class="plan-state">Free</p>
            ${upgradeReason ? `<p class="callout">${esc(upgradeReason)}</p>` : ''}
            <p>Free covers the planner, the what-if slider and ${FREE_BREAKS_PER_MONTH} saved breaks a month. Pro adds unlimited saved breaks, your own team templates, profit history and the tax export.</p>
            <div class="actions">
-             ${CFG.stripeMonthlyLink ? `<a class="btn" href="${esc(CFG.stripeMonthlyLink)}">Get Pro, $15 a month</a>` : ''}
-             ${CFG.stripeYearlyLink ? `<a class="btn-ghost" href="${esc(CFG.stripeYearlyLink)}">Get Pro, $119 a year</a>` : ''}
+             ${CFG.stripeMonthlyLink ? `<a class="btn" href="${esc(payLink(CFG.stripeMonthlyLink))}">Get Pro, $15 a month</a>` : ''}
+             ${CFG.stripeYearlyLink ? `<a class="btn-ghost" href="${esc(payLink(CFG.stripeYearlyLink))}">Get Pro, $119 a year</a>` : ''}
            </div>
            <p class="muted small">Payment is handled by Stripe. Cancel any time. By subscribing you agree to the <a href="terms.html">Terms</a>.</p>`;
     upgradeReason = '';
     $('#view-account').innerHTML = `
       <div class="page-head"><div><h1>Plan and data</h1></div></div>
+      ${account ? `<section class="panel"><h2>Your account</h2>
+        <p>Signed in as <strong>${esc(account.email)}</strong></p>
+        <div class="actions"><button class="btn-ghost" type="button" data-action="sign-out">Sign out</button></div></section>` : ''}
       <section class="panel"><h2>Your plan</h2>${plan}</section>
       <section class="panel">
         <h2>Your data</h2>
-        <p>Your breaks are stored in this browser on this device, not on a server. Clearing your browser data deletes them, so keep a backup.</p>
+        <p>${AUTH ? 'Your breaks are saved to your account, so they follow you to any device you sign in on. You can still download a copy.' : 'Your breaks are stored in this browser on this device, not on a server. Clearing your browser data deletes them, so keep a backup.'}</p>
         <div class="actions">
           <button class="btn-ghost" type="button" data-action="backup">Download backup</button>
           <label class="btn-ghost file-btn">Restore from backup<input type="file" accept="application/json,.json" data-action="restore" hidden></label>
@@ -801,13 +961,27 @@
       </section>`;
   }
 
+  // Tie the Stripe payment to this account so the webhook knows who paid.
+  function payLink(link) {
+    if (!account) return link;
+    const url = new URL(link);
+    url.searchParams.set('client_reference_id', account.id);
+    url.searchParams.set('prefilled_email', account.email);
+    return url.toString();
+  }
+
   function restoreBackup(file) {
     const reader = new FileReader();
     reader.onload = () => {
       try {
         const data = JSON.parse(reader.result);
         if (!data || !Array.isArray(data.breaks)) throw new Error('not a backup');
-        store = { ...blankStore(), ...data, pro: store.pro || Boolean(data.pro) };
+        // Fresh ids, so a restored backup adds to an account rather than
+        // overwriting rows that belong to it.
+        const fresh = (items) => (items || []).map((item) => ({ ...item, id: uid() }));
+        store = AUTH
+          ? { ...store, breaks: [...fresh(data.breaks), ...store.breaks], templates: [...fresh(data.templates), ...store.templates] }
+          : { ...blankStore(), ...data, pro: store.pro || Boolean(data.pro) };
         if (saveStore()) {
           toast('Backup restored.');
           renderAccount();
@@ -945,6 +1119,13 @@
       applyImport(el.dataset.id, el.closest('form').querySelector('[name="import"]').value);
     },
     'export-csv': exportCsv,
+    'auth-mode'(el) {
+      signedOutView(el.dataset.mode);
+    },
+    async 'sign-out'() {
+      await syncNow();
+      await db.auth.signOut();
+    },
     backup() {
       download(`breakmath-backup-${today()}.json`, JSON.stringify(store, null, 2), 'application/json');
       toast('Backup downloaded.');
@@ -1017,24 +1198,77 @@
       e.preventDefault();
       saveResults(e.target);
     }
+    if (e.target.dataset.form === 'auth') {
+      e.preventDefault();
+      submitAuth(e.target);
+    }
   });
 
   window.addEventListener('hashchange', () => show(location.hash.slice(1)));
 
   /* ---------- Start ---------- */
 
-  // Stripe sends people back to app.html?pro=welcome after they pay.
   const params = new URLSearchParams(location.search);
-  if (SELLING && params.get('pro') === 'welcome') {
-    store.pro = true;
-    saveStore();
-    history.replaceState(null, '', location.pathname + '#account');
-    setTimeout(() => toast('Pro is unlocked. Thank you.'), 300);
-    if (window.goatcounter && window.goatcounter.count) {
-      window.goatcounter.count({ path: 'pro-unlocked', title: 'Pro unlocked', event: true });
+
+  async function start() {
+    if (!AUTH) {
+      // No accounts: Stripe sends people back to app.html?pro=welcome after they pay.
+      if (SELLING && params.get('pro') === 'welcome') {
+        store.pro = true;
+        saveStore();
+        history.replaceState(null, '', location.pathname + '#account');
+        setTimeout(() => toast('Pro is unlocked. Thank you.'), 300);
+      }
+      setPill();
+      show(location.hash.slice(1) || 'planner');
+      return;
     }
+
+    $('#view-auth').hidden = false;
+    $('#view-auth').innerHTML = '<p class="muted">Loading…</p>';
+    try {
+      await connect();
+    } catch (err) {
+      $('#view-auth').innerHTML = "<p>Couldn't reach BreakMath. Check your connection and reload the page.</p>";
+      return;
+    }
+
+    let openFor = null;
+    db.auth.onAuthStateChange((event, session) => {
+      // Supabase calls this inside its own lock, so hand off before doing more work.
+      setTimeout(async () => {
+        if (event === 'PASSWORD_RECOVERY') {
+          signedOutView('newpass');
+        } else if (session && session.user) {
+          if (openFor === session.user.id) return;
+          openFor = session.user.id;
+          await openApp(session.user);
+          // Back from Stripe: the webhook may take a few seconds to mark the account Pro.
+          if (params.get('paid') && !account.pro) {
+            for (let i = 0; i < 10 && !account.pro; i += 1) {
+              await new Promise((r) => setTimeout(r, 2000));
+              await refreshPlan();
+            }
+            if (account.pro) {
+              toast('Pro is active. Thank you.');
+              renderAccount();
+            }
+            history.replaceState(null, '', location.pathname + '#account');
+          }
+        } else {
+          openFor = null;
+          account = null;
+          store.breaks = [];
+          store.templates = [];
+          signedOutView('signup');
+        }
+      }, 0);
+    });
   }
 
-  $('#plan-pill').textContent = !SELLING ? 'Early access' : store.pro ? 'Pro' : 'Free';
-  show(location.hash.slice(1) || 'planner');
+  window.addEventListener('beforeunload', () => {
+    if (AUTH && syncTimer) syncNow();
+  });
+
+  start();
 })();

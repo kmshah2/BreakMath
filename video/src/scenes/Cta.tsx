@@ -60,7 +60,7 @@ export const Cta: React.FC<{ duration: number }> = ({ duration }) => {
           translate: interpolate(frame, [20, 30], ["0px 30px", "0px 0px"], { ...CLAMP, easing: EASE_OUT }),
         }}
       >
-        No account. No card needed.
+        Free to start. No card needed.
       </Interactive.Div>
     </SceneShell>
   );

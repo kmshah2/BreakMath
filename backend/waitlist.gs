@@ -78,7 +78,7 @@ function sendThankYou(email) {
     body: [
       'Thanks for signing up for BreakMath updates.',
       '',
-      "You'll get an email from this address when new features ship. The planner is free to use right now at https://kmshah2.github.io/BreakMath/app.html",
+      "You'll get an email from this address when new features ship. The planner is free to use right now at https://breakmath.vercel.app/app.html",
       '',
       'One question, if you have a minute: how do you price your spots today? Just hit reply. Every answer gets read.',
       '',

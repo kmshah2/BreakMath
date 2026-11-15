@@ -48,14 +48,15 @@
 <p>Cookies are small files a website saves in your browser. This site does not set any, for advertising, analytics or anything else.</p>
 
 <h2>2. Analytics without cookies</h2>
-<p>We use GoatCounter to count visits. It does not use cookies or store anything on your device, and it does not follow you across other websites. What it records is described in our <a href="privacy.html">Privacy Policy</a>.</p>
+<p>We use Vercel Web Analytics, and may use GoatCounter, to count visits. Neither uses cookies or stores anything on your device, and neither follows you across other websites. What it records is described in our <a href="privacy.html">Privacy Policy</a>.</p>
 
 <h2>3. Browser storage</h2>
-<p>Browsers offer "local storage", which works like a cookie but is never sent to a server. The BreakMath app uses it to save your breaks, templates, results and plan status on your own device. This is necessary for the app to work. Clearing it in your browser's site data settings deletes your saved breaks, so download a backup in the app first.</p>
+<p>Browsers offer "local storage", which works like a cookie but is never sent to a server. The BreakMath app uses it to keep you signed in and to hold the break you are still editing. This is necessary for the app to work. Clearing it in your browser's site data settings signs you out; breaks you have saved to your account are not affected.</p>
 
 <h2>4. Other services your browser contacts</h2>
 <ul>
-<li><strong>GitHub Pages</strong> hosts the site and receives the technical details of each request, including your IP address.</li>
+<li><strong>Vercel</strong> hosts the site, counts visits without cookies, and receives the technical details of each request, including your IP address.</li>
+<li><strong>Supabase</strong> handles sign-in and stores your account and saved breaks.</li>
 <li><strong>Google Fonts</strong> delivers the typeface, so your browser sends a request, including your IP address, to Google.</li>
 <li><strong>GoatCounter</strong> receives the visit information described above.</li>
 <li><strong>Google</strong> receives your email address if you sign up for updates, because sign-ups are stored in Google Sheets.</li>
@@ -67,7 +68,7 @@
 <p>You can block or delete cookies and site data in your browser settings, and you can use a content blocker to stop analytics. The site works the same either way.</p>
 
 <h2>6. Changes</h2>
-<p>If we start using cookies, for example for sign-in, we will update this page first and ask for consent where the law requires it.</p>
+<p>If we start using cookies we will update this page first and ask for consent where the law requires it.</p>
 
 <h2>7. Contact</h2>
 <p>Questions: <a href="mailto:kushshah1515@gmail.com">kushshah1515@gmail.com</a>.</p>
@@ -86,6 +87,8 @@
   </div>
 </footer>
 
+<script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
+<script defer src="/_vercel/insights/script.js"></script>
 <script src="config.js"></script>
 <script src="analytics.js" defer></script>
 </body>

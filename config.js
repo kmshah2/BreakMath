@@ -1,8 +1,17 @@
 // BreakMath site settings. Everything you need to fill in is in this file.
 // Empty values are fine: each feature simply stays off until it has a value.
+// Everything here is safe to be public. Secret keys never go in this file.
 window.BREAKMATH = {
+  // ----- Accounts (Supabase) -----
+  // Your Supabase project URL and "anon public" key. Steps are in SETUP.md.
+  // While both are empty, there is no sign-in and breaks are saved in the
+  // visitor's own browser. Once set, people must sign in to use the app, their
+  // breaks are saved to their account, and the free limit is per account.
+  supabaseUrl: '',
+  supabaseAnonKey: '',
+
   // ----- Payments (Stripe) -----
-  // Stripe Payment Links for the Pro plan. Steps are in LAUNCH.md.
+  // Stripe Payment Links for the Pro plan. Steps are in SETUP.md.
   // While both are empty, nothing is for sale and every feature is free.
   stripeMonthlyLink: '',
   stripeYearlyLink: '',
@@ -16,8 +25,7 @@ window.BREAKMATH = {
   // While empty, the email form is hidden.
   waitlistEndpoint: '',
 
-  // Your GoatCounter site code, for visitor counts. If your dashboard is
-  // https://breakmath.goatcounter.com, the code is 'breakmath'.
-  // While empty, no analytics are loaded.
+  // Your GoatCounter site code, if you want a second visitor counter besides
+  // Vercel Analytics. While empty, it is not loaded.
   goatcounterCode: '',
 };
