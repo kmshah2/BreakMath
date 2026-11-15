@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=2">
+<link rel="stylesheet" href="styles.css?v=3">
 </head>
 <body>
 
@@ -48,8 +48,10 @@
   <section class="hero">
     <div class="wrap hero-grid">
       <div class="hero-copy">
+        <p class="hero-intro">Spot pricing calculator for card breakers</p>
         <h1>Know your profit before you open the box.</h1>
-        <p class="lede">BreakMath tells you what to charge for every spot so your break hits its profit goal. After the stream, it shows what you actually made.</p>
+        <p class="lede">Enter your costs and get a price for every spot that hits your profit goal.</p>
+        <div class="hero-join">
         <form class="waitlist" data-waitlist novalidate>
           <label class="sr-only" for="email-hero">Email address</label>
           <input id="email-hero" name="email" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com" required>
@@ -57,14 +59,16 @@
           <p class="waitlist-msg" role="status"></p>
         </form>
         <p class="fine">Free plan at launch. No card needed. By joining you agree to the <a href="terms.html">Terms</a> and <a href="privacy.html">Privacy Policy</a>.</p>
+        </div>
       </div>
 
       <div class="planner-wrap">
+        <p class="planner-label">Try it with your numbers</p>
         <section class="planner foil" aria-labelledby="planner-title">
           <header class="planner-head">
             <div>
               <h2 id="planner-title">Football hobby box</h2>
-              <p>Sample break with 8 spots. Change any number.</p>
+              <p>Sample break with 8 spots</p>
             </div>
           </header>
 
