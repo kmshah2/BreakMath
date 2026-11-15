@@ -3,3 +3,8 @@
 
 # Private launch notes and rendered videos: not part of the public site.
 launch/
+.gstack/
+
+# Never commit keys.
+.env
+.env.*
