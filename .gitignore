@@ -1,2 +1,5 @@
 .claude/
 .DS_Store
+
+# Private launch notes and rendered videos: not part of the public site.
+launch/
