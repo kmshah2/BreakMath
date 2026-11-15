@@ -16,13 +16,14 @@ export const Sfx: React.FC<{ name: "whoosh" | "impact" | "pop" | "cash"; at?: nu
   return sound ? <Audio from={at} src={staticFile(`audio/${name}.mp3`)} volume={volume} /> : null;
 };
 
-// Music bed under the whole video, faded out over the last half second.
-export const Music: React.FC = () => {
+// Music bed under the whole video, faded out over the last half second. Each
+// ad has its own track in public/audio.
+export const Music: React.FC<{ track: string }> = ({ track }) => {
   const sound = useContext(SoundContext);
   const { durationInFrames } = useVideoConfig();
   return sound ? (
     <Audio
-      src={staticFile("audio/music.mp3")}
+      src={staticFile(`audio/${track}.mp3`)}
       volume={(f) => interpolate(f, [0, durationInFrames - 16, durationInFrames - 1], [0.2, 0.2, 0], CLAMP)}
     />
   ) : null;
@@ -108,11 +109,12 @@ export const Chrome: React.FC = () => {
 
 // Shared frame for a scene: keeps content inside the area that TikTok and
 // Reels leave clear of their own buttons, punches in on the cut, then drifts.
-export const SceneShell: React.FC<{ duration: number; gap?: number; children: React.ReactNode }> = ({
-  duration,
-  gap = 56,
-  children,
-}) => {
+export const SceneShell: React.FC<{
+  duration: number;
+  gap?: number;
+  style?: React.CSSProperties;
+  children: React.ReactNode;
+}> = ({ duration, gap = 56, style, children }) => {
   const frame = useCurrentFrame();
   return (
     <AbsoluteFill
@@ -129,6 +131,7 @@ export const SceneShell: React.FC<{ duration: number; gap?: number; children: Re
           easing: [EASE_OUT, (t: number) => t],
           output: "perceptual-scale",
         }),
+        ...style,
       }}
     >
       {children}

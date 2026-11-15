@@ -1,8 +1,10 @@
 import { AbsoluteFill, Composition, Folder, Still } from "remotion";
 import { Background, Field, LogoMark } from "./parts";
 import { Reel, SCENE_COMPONENTS } from "./Reel";
-import { FPS, SCRIPT, SHORTS, ShortId, TOTAL_FRAMES } from "./script";
-import { Short, shortFrames } from "./shorts/Short";
+import { FPS, SCRIPT, shortFrames, TOTAL_FRAMES } from "./script";
+import { FeesAd } from "./shorts/FeesAd";
+import { GaugeAd } from "./shorts/GaugeAd";
+import { TiersAd } from "./shorts/TiersAd";
 
 const WIDTH = 1080;
 const HEIGHT = 1920;
@@ -29,16 +31,22 @@ export const RemotionRoot: React.FC = () => {
         defaultProps={{ voiceover: true }}
       />
       <Folder name="Shorts">
-        {(Object.keys(SHORTS) as ShortId[]).map((id) => (
+        {(
+          [
+            ["fees", FeesAd],
+            ["tiers", TiersAd],
+            ["whatif", GaugeAd],
+          ] as const
+        ).map(([id, component]) => (
           <Composition
             key={id}
             id={`Short-${id}`}
-            component={Short}
+            component={component}
             width={WIDTH}
             height={HEIGHT}
             fps={FPS}
             durationInFrames={shortFrames(id)}
-            defaultProps={{ id, voiceover: true }}
+            defaultProps={{ voiceover: true }}
           />
         ))}
       </Folder>

@@ -39,7 +39,7 @@ export const Reel: React.FC<ReelProps> = ({ voiceover }) => {
     <SoundContext.Provider value={voiceover}>
       <AbsoluteFill>
         <Field yard={yard} />
-        <Music />
+        <Music track="music-reel" />
         <Series>
           {SCRIPT.map((scene) => {
             const Scene = SCENE_COMPONENTS[scene.id as SceneId];

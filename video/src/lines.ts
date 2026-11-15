@@ -15,29 +15,31 @@ export const REEL_LINES = [
   { id: "06-cta", baseFrames: 55, voiceover: "It's free. Link in bio." },
 ] as const;
 
-// Three shorter follow-up videos. Each is a hook, one demo and the closing
-// call to try it. The spoken hook names the audience first.
+// Three shorter ads, each with its own look. Every one has a hook, a demo and
+// the closing call. The spoken hook names the audience first. All numbers are
+// the 6-spot sample break: $1,200 box + $60 shipping, fees of 10.9% plus $0.30
+// a spot, 20% profit goal.
 export const SHORT_LINES = {
+  // The receipt.
   fees: {
-    hook: "Adding 20% to your cost doesn't make 20% profit.",
     hookVoiceover: "Card breakers: adding 20% to your cost doesn't make 20% profit.",
     hookBaseFrames: 50,
     demoVoiceover: "Fees come out of every sale. BreakMath prices for them, so you actually hit your goal.",
     demoBaseFrames: 110,
   },
+  // The podium.
   tiers: {
-    hook: "Charging the same for every team?",
     hookVoiceover: "Card breakers: charging the same for every team?",
     hookBaseFrames: 40,
     demoVoiceover: "Top teams carry more. Weak teams cost less. BreakMath prices each spot by what it's worth.",
     demoBaseFrames: 120,
   },
+  // The gauge.
   whatif: {
-    hook: "How far below list can your spots sell?",
     hookVoiceover: "Card breakers: how far below list can your spots sell?",
     hookBaseFrames: 45,
     demoVoiceover:
-      "At list price, this break makes $254. At 10% under, $102. At 20% under, it loses money. BreakMath shows your floor before you go live.",
+      "At list price, this break makes $253. At 10% under, $101. At 20% under, it loses money. BreakMath shows your floor before you go live.",
     demoBaseFrames: 280,
   },
 } as const;

@@ -29,24 +29,29 @@ Run these from this `video/` folder.
 | Record the voice, then render everything | `npm run voice` |
 | Only record the voice | `npm run voiceover` |
 | Re-make the sound effects (ElevenLabs) | `npm run audio` |
-| Re-make the backing track | `python3 make-music.py`, then convert `public/audio/music.wav` to `music.mp3` |
+| Re-make the backing tracks | `python3 make-music.py`, then convert each `public/audio/music-*.wav` to mp3 |
 | Only render all four videos with the current voice | `npm run render:all` |
 | Render the silent launch reel | `npm run render` |
 
 Videos are saved to `out/`.
 
-## Other videos
+## The four ads
 
-Three shorts live in `src/shorts/` (`Short-fees`, `Short-tiers`, `Short-whatif`) and a square `ProfileImage` still. Render one with, for example:
+Same brand (logo, foil colours, typeface, the "For card breakers" tag), four different looks:
 
-```
-npx remotion render Short-fees out/breakmath-short-fees.mp4
-```
+| Composition | Look | File |
+|---|---|---|
+| `BreakMathReelWithVoiceover` | Drive down a football field; trading cards | `src/Reel.tsx`, `src/scenes/` |
+| `Short-fees` | A receipt printing out | `src/shorts/FeesAd.tsx` |
+| `Short-tiers` | Spotlight stage with podiums | `src/shorts/TiersAd.tsx` |
+| `Short-whatif` | Speedometer gauge | `src/shorts/GaugeAd.tsx` |
+
+`src/shorts/Ad.tsx` is the frame the three shorter ads share (voice, music, closing call). Each ad has its own music track, `public/audio/music-<ad>.mp3`.
 
 ## Sound
 
 - **Voice:** ElevenLabs, played back at 1.12× (`VOICE_RATE` in `src/lines.ts`).
-- **Music:** `public/audio/music.mp3`, an original 132 BPM phonk-style loop (cowbell riff, 808, fast hats) synthesized by `make-music.py`. No samples, nothing to license. Volume is set in `Music` in `src/parts.tsx`.
+- **Music:** one original track per ad in `public/audio/` (phonk cowbell, plucked bounce, bell trap, square-wave tension), all synthesized by `make-music.py`. No samples, nothing to license. Volume is set in `Music` in `src/parts.tsx`.
 - **Effects:** whoosh, impact, pop and cash sounds in `public/audio/`, made with ElevenLabs by `generate-audio.ts`.
 
 ## Where things are

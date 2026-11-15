@@ -29,11 +29,12 @@ export const SHORTS = Object.fromEntries(
   (Object.keys(SHORT_LINES) as ShortId[]).map((id) => [
     id,
     {
-      hook: SHORT_LINES[id].hook,
       hookFrames: fit(`short-${id}-hook`, SHORT_LINES[id].hookBaseFrames),
       demoFrames: fit(`short-${id}-demo`, SHORT_LINES[id].demoBaseFrames),
     },
   ]),
-) as Record<ShortId, { hook: string; hookFrames: number; demoFrames: number }>;
+) as Record<ShortId, { hookFrames: number; demoFrames: number }>;
 
 export const SHORT_CTA_FRAMES = fit("06-cta", 55);
+
+export const shortFrames = (id: ShortId) => SHORTS[id].hookFrames + SHORTS[id].demoFrames + SHORT_CTA_FRAMES;
