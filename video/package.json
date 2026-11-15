@@ -34,7 +34,8 @@
     "voiceover": "node --env-file=.env.local --strip-types generate-voiceover.ts",
     "render:voiceover": "remotion render BreakMathReelWithVoiceover out/breakmath-reel-voiceover.mp4",
     "render:all": "./render-all.sh",
-    "voice": "npm run voiceover && npm run render:all"
+    "voice": "npm run voiceover && npm run render:all",
+    "audio": "node --env-file=.env.local --strip-types generate-audio.ts"
   },
   "allowScripts": {
     "esbuild": false

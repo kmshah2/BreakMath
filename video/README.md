@@ -1,6 +1,6 @@
 # BreakMath launch reel
 
-Vertical video (1080×1920, 30 fps, 28 seconds) for TikTok and Instagram Reels, built with [Remotion](https://www.remotion.dev).
+Vertical video (1080×1920, 30 fps, about 20 seconds) for TikTok and Instagram Reels, built with [Remotion](https://www.remotion.dev).
 
 ## Voice
 
@@ -28,6 +28,8 @@ Run these from this `video/` folder.
 | Preview and edit in the browser | `npm run dev` |
 | Record the voice, then render everything | `npm run voice` |
 | Only record the voice | `npm run voiceover` |
+| Re-make the sound effects (ElevenLabs) | `npm run audio` |
+| Re-make the backing track | `python3 make-music.py`, then convert `public/audio/music.wav` to `music.mp3` |
 | Only render all four videos with the current voice | `npm run render:all` |
 | Render the silent launch reel | `npm run render` |
 
@@ -40,6 +42,12 @@ Three shorts live in `src/shorts/` (`Short-fees`, `Short-tiers`, `Short-whatif`)
 ```
 npx remotion render Short-fees out/breakmath-short-fees.mp4
 ```
+
+## Sound
+
+- **Voice:** ElevenLabs, played back at 1.12× (`VOICE_RATE` in `src/lines.ts`).
+- **Music:** `public/audio/music.mp3`, an original 124 BPM loop synthesized by `make-music.py`. No samples, nothing to license. Volume is set in `Music` in `src/parts.tsx`.
+- **Effects:** whoosh, impact, pop and cash sounds in `public/audio/`, made with ElevenLabs by `generate-audio.ts`.
 
 ## Where things are
 

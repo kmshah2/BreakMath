@@ -2,16 +2,16 @@
 // stretches to fit its voice clip, using the clip lengths that
 // generate-voiceover.ts measures and saves in voice-timing.json.
 
-import { FPS, REEL_LINES, SHORT_LINES } from "./lines";
+import { FPS, REEL_LINES, SHORT_LINES, VOICE_RATE } from "./lines";
 import timing from "./voice-timing.json";
 
-export { FPS };
+export { FPS, VOICE_RATE };
 
 const clipSeconds = timing as Record<string, number>;
 
-// Frames a scene needs: a short lead-in, the clip, then a breath before the cut.
+// Frames a scene needs: the clip at playback speed plus a beat before the cut.
 const fit = (clipId: string, baseFrames: number) =>
-  Math.max(baseFrames, Math.ceil((clipSeconds[clipId] ?? 0) * FPS) + 20);
+  Math.max(baseFrames, Math.ceil(((clipSeconds[clipId] ?? 0) / VOICE_RATE) * FPS) + 10);
 
 export const SCRIPT = REEL_LINES.map((line) => ({
   id: line.id,
@@ -36,4 +36,4 @@ export const SHORTS = Object.fromEntries(
   ]),
 ) as Record<ShortId, { hook: string; hookFrames: number; demoFrames: number }>;
 
-export const SHORT_CTA_FRAMES = fit("07-cta", 95);
+export const SHORT_CTA_FRAMES = fit("07-cta", 50);

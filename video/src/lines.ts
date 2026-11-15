@@ -3,38 +3,40 @@
 
 export const FPS = 30;
 
+// The voice is played back slightly faster than recorded to keep the pace up.
+export const VOICE_RATE = 1.12;
+
 export const REEL_LINES = [
-  { id: "01-hook", baseFrames: 105, voiceover: "Still pricing your break spots by gut feel?" },
-  { id: "02-problem", baseFrames: 135, voiceover: "One badly priced break can wipe out several good ones." },
-  { id: "03-intro", baseFrames: 75, voiceover: "BreakMath does the math." },
-  { id: "04-inputs", baseFrames: 150, voiceover: "Enter your box cost, your fees, and the profit you want." },
-  { id: "05-tiers", baseFrames: 165, voiceover: "Rate each team, and get a price for every spot." },
-  { id: "06-profit", baseFrames: 105, voiceover: "Know your profit before you open the box." },
-  { id: "07-cta", baseFrames: 95, voiceover: "Try it free. Link in bio." },
+  { id: "01-hook", baseFrames: 70, voiceover: "Your break sold out. And you still lost money." },
+  { id: "02-turn", baseFrames: 55, voiceover: "BreakMath prices every spot before you buy the box." },
+  { id: "03-inputs", baseFrames: 55, voiceover: "Enter your cost and your real fees." },
+  { id: "04-tiers", baseFrames: 70, voiceover: "Rate each team. Every spot gets a price." },
+  { id: "05-fill", baseFrames: 55, voiceover: "See your profit, even if it doesn't sell out." },
+  { id: "06-profit", baseFrames: 50, voiceover: "Know your number before you go live." },
+  { id: "07-cta", baseFrames: 50, voiceover: "It's free. Link in bio." },
 ] as const;
 
 // Three shorter follow-up videos. Each is a hook, one demo and the closing
-// call to try it. Numbers all come from the same sample break as the main reel
-// ($1,200 box, $60 shipping, 12% fees, 20% profit goal, 8 spots).
+// call to try it.
 export const SHORT_LINES = {
   fees: {
     hook: "Adding 20% to your cost doesn't make 20% profit.",
-    hookBaseFrames: 105,
+    hookBaseFrames: 50,
     demoVoiceover: "Fees come out of every sale. Price for them, and you actually hit your goal.",
-    demoBaseFrames: 190,
+    demoBaseFrames: 110,
   },
   tiers: {
     hook: "Charging the same for every team?",
-    hookBaseFrames: 75,
+    hookBaseFrames: 40,
     demoVoiceover: "Top teams carry more. Weak teams cost less. Same total, priced by what each spot is worth.",
-    demoBaseFrames: 200,
+    demoBaseFrames: 120,
   },
   whatif: {
     hook: "How far below list can your spots sell?",
-    hookBaseFrames: 85,
+    hookBaseFrames: 45,
     demoVoiceover:
       "At list price, this break makes $254. At 10% under, $102. At 20% under, it loses money. Know your floor before you go live.",
-    demoBaseFrames: 330,
+    demoBaseFrames: 280,
   },
 } as const;
 

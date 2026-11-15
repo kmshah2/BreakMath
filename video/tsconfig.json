@@ -17,6 +17,7 @@
   },
   "exclude": [
     "remotion.config.ts",
-    "generate-voiceover.ts"
+    "generate-voiceover.ts",
+    "generate-audio.ts"
   ]
 }

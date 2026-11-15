@@ -1,33 +1,33 @@
 import { Interactive, interpolate, useCurrentFrame } from "remotion";
-import { LogoMark, SceneShell } from "../parts";
-import { C, CLAMP, EASE_OUT, FOIL, POP } from "../theme";
+import { LogoMark, SceneShell, Sfx, Words } from "../parts";
+import { CLAMP, EASE_OUT, FOIL, headline, POP } from "../theme";
 
-// The turn: name the product.
+// The turn: name the product and what it does.
 export const Intro: React.FC<{ duration: number }> = ({ duration }) => {
   const frame = useCurrentFrame();
   return (
-    <SceneShell duration={duration} gap={40}>
-      <div style={{ position: "relative", width: 300, height: 300 }}>
+    <SceneShell duration={duration} gap={36}>
+      <Sfx name="whoosh" volume={0.55} />
+      <div style={{ position: "relative", width: 240, height: 240 }}>
         <div
           style={{
             position: "absolute",
             inset: -160,
             borderRadius: "50%",
-            background: `conic-gradient(from ${frame * 5}deg, ${FOIL})`,
+            background: `conic-gradient(from ${frame * 9}deg, ${FOIL})`,
             filter: "blur(120px)",
-            opacity: interpolate(frame, [0, 14, 60], [0, 0.7, 0.4], CLAMP),
+            opacity: interpolate(frame, [0, 6, 40], [0, 0.75, 0.4], CLAMP),
           }}
         />
         <Interactive.Div
           name="Logo"
           style={{
             position: "relative",
-            scale: interpolate(frame, [2, 26], [0.4, 1], { ...CLAMP, easing: POP, output: "perceptual-scale" }),
-            opacity: interpolate(frame, [2, 10], [0, 1], CLAMP),
-            rotate: interpolate(frame, [2, 26], ["-14deg", "0deg"], { ...CLAMP, easing: EASE_OUT }),
+            scale: interpolate(frame, [0, 12], [0.3, 1], { ...CLAMP, easing: POP, output: "perceptual-scale" }),
+            rotate: interpolate(frame, [0, 12], ["-18deg", "0deg"], { ...CLAMP, easing: EASE_OUT }),
           }}
         >
-          <LogoMark size={300} />
+          <LogoMark size={240} />
         </Interactive.Div>
       </div>
       <Interactive.Div
@@ -37,25 +37,13 @@ export const Intro: React.FC<{ duration: number }> = ({ duration }) => {
           fontWeight: 800,
           letterSpacing: "-0.045em",
           lineHeight: 1,
-          opacity: interpolate(frame, [12, 24], [0, 1], CLAMP),
-          translate: interpolate(frame, [12, 34], ["0px 60px", "0px 0px"], { ...CLAMP, easing: EASE_OUT }),
+          opacity: interpolate(frame, [3, 8], [0, 1], CLAMP),
+          translate: interpolate(frame, [3, 14], ["0px 50px", "0px 0px"], { ...CLAMP, easing: EASE_OUT }),
         }}
       >
         BreakMath
       </Interactive.Div>
-      <Interactive.Div
-        name="Tagline"
-        style={{
-          fontSize: 84,
-          fontWeight: 700,
-          letterSpacing: "-0.03em",
-          color: C.muted,
-          opacity: interpolate(frame, [26, 38], [0, 1], CLAMP),
-          translate: interpolate(frame, [26, 46], ["0px 40px", "0px 0px"], { ...CLAMP, easing: EASE_OUT }),
-        }}
-      >
-        does the math.
-      </Interactive.Div>
+      <Words text="prices every spot before you buy the box." start={10} style={{ ...headline, fontSize: 84 }} />
     </SceneShell>
   );
 };

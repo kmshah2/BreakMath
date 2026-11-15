@@ -1,5 +1,32 @@
-import { AbsoluteFill, Interactive, interpolate, useCurrentFrame } from "remotion";
+import { Audio } from "@remotion/media";
+import { createContext, useContext } from "react";
+import { AbsoluteFill, Interactive, interpolate, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
 import { C, CLAMP, EASE_OUT, FOIL, fontFamily } from "./theme";
+
+// Whether this render has sound (voice, music, effects) or is the silent cut.
+export const SoundContext = createContext(false);
+
+// A one-shot sound effect from public/audio, placed on the scene's own clock.
+export const Sfx: React.FC<{ name: "whoosh" | "impact" | "pop" | "cash"; at?: number; volume?: number }> = ({
+  name,
+  at = 0,
+  volume = 0.5,
+}) => {
+  const sound = useContext(SoundContext);
+  return sound ? <Audio from={at} src={staticFile(`audio/${name}.mp3`)} volume={volume} /> : null;
+};
+
+// Music bed under the whole video, faded out over the last half second.
+export const Music: React.FC = () => {
+  const sound = useContext(SoundContext);
+  const { durationInFrames } = useVideoConfig();
+  return sound ? (
+    <Audio
+      src={staticFile("audio/music.mp3")}
+      volume={(f) => interpolate(f, [0, durationInFrames - 16, durationInFrames - 1], [0.2, 0.2, 0], CLAMP)}
+    />
+  ) : null;
+};
 
 // Slow drifting foil light behind every scene.
 export const Background: React.FC = () => {
@@ -14,10 +41,10 @@ export const Background: React.FC = () => {
           left: 260,
           top: 120,
           borderRadius: "50%",
-          background: `conic-gradient(from ${frame * 1.2}deg, ${FOIL})`,
+          background: `conic-gradient(from ${frame * 2.4}deg, ${FOIL})`,
           filter: "blur(190px)",
-          opacity: 0.2,
-          translate: `${Math.sin(frame / 70) * 90}px ${Math.cos(frame / 90) * 120}px`,
+          opacity: 0.22,
+          translate: `${Math.sin(frame / 35) * 110}px ${Math.cos(frame / 45) * 140}px`,
         }}
       />
       <div
@@ -28,21 +55,57 @@ export const Background: React.FC = () => {
           left: -340,
           top: 1050,
           borderRadius: "50%",
-          background: `conic-gradient(from ${-frame * 0.9}deg, ${FOIL})`,
+          background: `conic-gradient(from ${-frame * 1.8}deg, ${FOIL})`,
           filter: "blur(200px)",
-          opacity: 0.13,
-          translate: `${Math.cos(frame / 80) * 80}px ${Math.sin(frame / 60) * 70}px`,
+          opacity: 0.14,
+          translate: `${Math.cos(frame / 40) * 90}px ${Math.sin(frame / 30) * 80}px`,
         }}
       />
     </AbsoluteFill>
   );
 };
 
+// Brand tag and a foil progress line that runs the length of the video.
+export const Chrome: React.FC = () => {
+  const frame = useCurrentFrame();
+  const { durationInFrames } = useVideoConfig();
+  return (
+    <AbsoluteFill name="Chrome" style={{ fontFamily, color: C.text }}>
+      <div style={{ position: "absolute", left: 0, top: 0, height: 10, width: "100%", backgroundColor: "rgba(255,255,255,0.08)" }}>
+        <div
+          style={{
+            height: "100%",
+            width: `${(frame / (durationInFrames - 1)) * 100}%`,
+            background: "linear-gradient(90deg, #7df3ff, #9b8cff, #ff8ad4, #ffd58a)",
+          }}
+        />
+      </div>
+      <div
+        style={{
+          position: "absolute",
+          left: 90,
+          top: 128,
+          display: "flex",
+          alignItems: "center",
+          gap: 16,
+          fontSize: 44,
+          fontWeight: 800,
+          letterSpacing: "-0.03em",
+          opacity: 0.92,
+        }}
+      >
+        <LogoMark size={60} />
+        BreakMath
+      </div>
+    </AbsoluteFill>
+  );
+};
+
 // Shared frame for a scene: keeps content inside the area that TikTok and
-// Reels leave clear of their own buttons, and fades the scene in and out.
+// Reels leave clear of their own buttons, punches in on the cut, then drifts.
 export const SceneShell: React.FC<{ duration: number; gap?: number; children: React.ReactNode }> = ({
   duration,
-  gap = 64,
+  gap = 56,
   children,
 }) => {
   const frame = useCurrentFrame();
@@ -51,13 +114,13 @@ export const SceneShell: React.FC<{ duration: number; gap?: number; children: Re
       style={{
         fontFamily,
         color: C.text,
-        padding: "230px 90px 430px",
+        padding: "250px 90px 430px",
         justifyContent: "center",
         gap,
-        opacity: interpolate(frame, [0, 6, duration - 7, duration], [0, 1, 1, 0], CLAMP),
-        scale: interpolate(frame, [duration - 10, duration], [1, 0.965], {
+        opacity: interpolate(frame, [0, 3, duration - 3, duration], [0, 1, 1, 0], CLAMP),
+        scale: interpolate(frame, [0, 7, duration], [1.1, 1, 1.035], {
           ...CLAMP,
-          easing: EASE_OUT,
+          easing: [EASE_OUT, (t: number) => t],
           output: "perceptual-scale",
         }),
       }}
@@ -67,11 +130,11 @@ export const SceneShell: React.FC<{ duration: number; gap?: number; children: Re
   );
 };
 
-// Headline whose words rise in one after another.
+// Headline whose words snap in one after another.
 export const Words: React.FC<{ text: string; start?: number; stagger?: number; style?: React.CSSProperties }> = ({
   text,
   start = 0,
-  stagger = 3,
+  stagger = 2,
   style,
 }) => {
   const frame = useCurrentFrame();
@@ -83,11 +146,11 @@ export const Words: React.FC<{ text: string; start?: number; stagger?: number; s
           style={{
             display: "inline-block",
             marginRight: "0.24em",
-            opacity: interpolate(frame, [start + i * stagger, start + i * stagger + 10], [0, 1], CLAMP),
+            opacity: interpolate(frame, [start + i * stagger, start + i * stagger + 4], [0, 1], CLAMP),
             translate: interpolate(
               frame,
-              [start + i * stagger, start + i * stagger + 16],
-              ["0px 46px", "0px 0px"],
+              [start + i * stagger, start + i * stagger + 9],
+              ["0px 40px", "0px 0px"],
               { ...CLAMP, easing: EASE_OUT },
             ),
           }}
@@ -112,7 +175,7 @@ export const FoilCard: React.FC<{ children: React.ReactNode; style?: React.CSSPr
         style={{
           position: "absolute",
           inset: "8% 4%",
-          background: `conic-gradient(from ${frame * 2.4}deg, ${FOIL})`,
+          background: `conic-gradient(from ${frame * 5}deg, ${FOIL})`,
           filter: "blur(110px)",
           opacity: glow,
         }}
@@ -123,7 +186,7 @@ export const FoilCard: React.FC<{ children: React.ReactNode; style?: React.CSSPr
           border: "4px solid transparent",
           borderRadius: 48,
           padding: 48,
-          background: `linear-gradient(${C.surface}, ${C.surface}) padding-box, conic-gradient(from ${frame * 2.4}deg, ${FOIL}) border-box`,
+          background: `linear-gradient(${C.surface}, ${C.surface}) padding-box, conic-gradient(from ${frame * 5}deg, ${FOIL}) border-box`,
           fontVariantNumeric: "tabular-nums",
           ...style,
         }}

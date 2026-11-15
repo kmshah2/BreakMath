@@ -1,5 +1,5 @@
 import { Interactive, interpolate, useCurrentFrame } from "remotion";
-import { FoilCard, SceneShell, Words } from "../parts";
+import { FoilCard, SceneShell, Sfx, Words } from "../parts";
 import { C, CLAMP, EASE_OUT, headline, money, POP } from "../theme";
 
 type Tier = "Top" | "Mid" | "Low";
@@ -16,7 +16,7 @@ const TEAMS: { name: string; tier: Tier; price: number }[] = [
   { name: "Denver", tier: "Low", price: 115 },
   { name: "Seattle", tier: "Low", price: 115 },
 ];
-const SPLIT = 84;
+const SPLIT = 44;
 
 const chip = (tier: Tier): React.CSSProperties => ({
   display: "flex",
@@ -38,7 +38,8 @@ const chip = (tier: Tier): React.CSSProperties => ({
 export const TiersDemo: React.FC<{ duration: number }> = ({ duration }) => {
   const frame = useCurrentFrame();
   return (
-    <SceneShell duration={duration} gap={56}>
+    <SceneShell duration={duration} gap={48}>
+      <Sfx name="pop" at={SPLIT} volume={0.8} />
       <Words text="Same $1,720 total. Priced by team." style={{ ...headline, fontSize: 88 }} />
       <FoilCard style={{ padding: "20px 44px" }}>
         {TEAMS.map((team, i) => (
@@ -54,8 +55,8 @@ export const TiersDemo: React.FC<{ duration: number }> = ({ duration }) => {
               borderBottom: i < TEAMS.length - 1 ? `2px solid ${C.line}` : "none",
               fontSize: 50,
               fontWeight: 600,
-              opacity: interpolate(frame, [8 + i * 4, 16 + i * 4], [0, 1], CLAMP),
-              translate: interpolate(frame, [8 + i * 4, 24 + i * 4], ["0px 30px", "0px 0px"], {
+              opacity: interpolate(frame, [3 + i * 2, 7 + i * 2], [0, 1], CLAMP),
+              translate: interpolate(frame, [3 + i * 2, 12 + i * 2], ["0px 30px", "0px 0px"], {
                 ...CLAMP,
                 easing: EASE_OUT,
               }),
@@ -66,7 +67,7 @@ export const TiersDemo: React.FC<{ duration: number }> = ({ duration }) => {
               style={{
                 ...chip(team.tier),
                 opacity: interpolate(frame, [SPLIT + i * 2, SPLIT + i * 2 + 4], [0, 1], CLAMP),
-                scale: interpolate(frame, [SPLIT + i * 2, SPLIT + i * 2 + 16], [0.6, 1], {
+                scale: interpolate(frame, [SPLIT + i * 2, SPLIT + i * 2 + 10], [0.6, 1], {
                   ...CLAMP,
                   easing: POP,
                   output: "perceptual-scale",
@@ -77,7 +78,7 @@ export const TiersDemo: React.FC<{ duration: number }> = ({ duration }) => {
             </div>
             <span style={{ textAlign: "right", fontSize: 56, fontWeight: 800 }}>
               {money(
-                interpolate(frame, [SPLIT + i * 2, SPLIT + i * 2 + 22], [FLAT, team.price], {
+                interpolate(frame, [SPLIT + i * 2, SPLIT + i * 2 + 12], [FLAT, team.price], {
                   ...CLAMP,
                   easing: EASE_OUT,
                 }),

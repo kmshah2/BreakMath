@@ -1,15 +1,15 @@
 {
-  "01-hook": 2.69,
-  "02-problem": 3.55,
-  "03-intro": 1.88,
-  "04-inputs": 3.71,
-  "05-tiers": 3.24,
-  "06-profit": 2.77,
-  "07-cta": 2.04,
+  "01-hook": 3.32,
+  "02-turn": 3.63,
+  "03-inputs": 2.69,
+  "04-tiers": 3.32,
+  "05-fill": 2.85,
+  "06-profit": 2.43,
+  "07-cta": 1.88,
   "short-fees-hook": 4.13,
-  "short-fees-demo": 4.83,
+  "short-fees-demo": 4.99,
   "short-tiers-hook": 2.19,
   "short-tiers-demo": 6.84,
   "short-whatif-hook": 2.77,
-  "short-whatif-demo": 12.04
+  "short-whatif-demo": 12.12
 }

@@ -1,5 +1,5 @@
 import { Interactive, interpolate, useCurrentFrame } from "remotion";
-import { FoilCard, SceneShell } from "../parts";
+import { FoilCard, SceneShell, Sfx } from "../parts";
 import { C, CLAMP, EASE_OUT, money } from "../theme";
 
 // Sample break: list $1,720, 12% fees, $1,260 cost.
@@ -9,10 +9,12 @@ const MAX = 30;
 // Drag the discount and watch profit fall through zero.
 export const WhatIfDemo: React.FC<{ duration: number }> = ({ duration }) => {
   const frame = useCurrentFrame();
-  const discount = interpolate(frame, [96, 118, 190, 212], [0, 10, 10, 20], { ...CLAMP, easing: EASE_OUT });
+  const discount = interpolate(frame, [84, 98, 160, 174], [0, 10, 10, 20], { ...CLAMP, easing: EASE_OUT });
   const profit = profitAt(discount);
   return (
     <SceneShell duration={duration} gap={48}>
+      <Sfx name="pop" at={84} volume={0.6} />
+      <Sfx name="impact" at={166} volume={0.7} />
       <FoilCard style={{ display: "flex", flexDirection: "column", gap: 28, padding: 56 }}>
         <Interactive.Div name="Label" style={{ fontSize: 50, fontWeight: 600, color: C.muted }}>
           Spots sell{" "}
@@ -30,7 +32,7 @@ export const WhatIfDemo: React.FC<{ duration: number }> = ({ duration }) => {
             lineHeight: 1,
             fontVariantNumeric: "tabular-nums",
             color: profit < 0 ? C.down : C.up,
-            opacity: interpolate(frame, [6, 14], [0, 1], CLAMP),
+            opacity: interpolate(frame, [0, 4], [0, 1], CLAMP),
           }}
         >
           {money(profit)}
@@ -69,8 +71,8 @@ export const WhatIfDemo: React.FC<{ duration: number }> = ({ duration }) => {
           fontWeight: 800,
           letterSpacing: "-0.03em",
           lineHeight: 1.08,
-          opacity: interpolate(frame, [285, 297], [0, 1], CLAMP),
-          translate: interpolate(frame, [285, 307], ["0px 40px", "0px 0px"], { ...CLAMP, easing: EASE_OUT }),
+          opacity: interpolate(frame, [236, 242], [0, 1], CLAMP),
+          translate: interpolate(frame, [236, 248], ["0px 40px", "0px 0px"], { ...CLAMP, easing: EASE_OUT }),
         }}
       >
         Profitable up to 16% below list.
