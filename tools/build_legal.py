@@ -201,7 +201,7 @@ PAGES['terms.html'] = ('Terms of Service', 'The terms and conditions for using t
 <ul>
 <li>BreakMath does not know the value of any card, box, case, team or spot, and does not use market price data.</li>
 <li>Results depend entirely on your inputs. Wrong or incomplete inputs give wrong results.</li>
-<li>Results do not account for everything that affects your profit, including unsold spots, refunds, chargebacks, taxes, shipping problems, platform rule changes and changes in demand.</li>
+<li>Results do not account for everything that affects your profit, including refunds, chargebacks, taxes, shipping problems, platform rule changes and changes in demand. Fill rates and fee rates are your estimates, and any fee rates the app suggests may be out of date.</li>
 <li>Sample breaks, sample numbers and the sample profit history on the Site are illustrations. They are not real results and do not predict yours.</li>
 </ul>
 
@@ -336,7 +336,7 @@ PAGES['disclaimer.html'] = ('Disclaimer', 'BreakMath gives estimates, not advice
 <p>BreakMath does not know what any card, box, case, team or spot is worth and does not use market price data. Results depend entirely on the costs, fees, goals and team tiers you enter. Check your inputs, especially the fees your platform and payment processor actually charge.</p>
 
 <h2>5. What the calculator leaves out</h2>
-<p>Results do not include unsold spots, refunds, chargebacks, returned or lost shipments, taxes, your time, changes in platform fees or rules, or changes in demand, unless you add them to your own numbers.</p>
+<p>Results use the fee rates and the share of spots you tell it you expect to sell. They assume unsold spots are spread evenly by value, which may not match your break. Any platform fee rates the app offers to fill in are commonly reported figures that may be out of date or not apply to you; check your own payout statement. Results do not include refunds, chargebacks, returned or lost shipments, taxes, fees charged on buyer-paid shipping and tax, your time, or changes in demand, unless you add them to your own numbers.</p>
 
 <h2>6. Sample numbers</h2>
 <p>The sample break, team list, prices and profit history shown on this site are made-up examples that show how the product is meant to work. They are not real customer results.</p>

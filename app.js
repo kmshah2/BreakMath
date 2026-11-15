@@ -75,6 +75,9 @@
       box: '',
       ship: '',
       fee: '',
+      feeFixed: '',
+      fill: '100',
+      priceForFill: false,
       target: '20',
       rounding: 1,
       weights: { top: 3, mid: 2, low: 1 },
@@ -113,30 +116,48 @@
 
   // Work out what the spots must bring in after fees to hit the profit goal,
   // split it across spots by tier weight, then round each price.
+  //
+  // Fees have two parts: a percent of every sale, and a fixed amount charged
+  // on each spot sold (payment processors add one per order). "Fill" is the
+  // share of the break you expect to sell; unsold spots are assumed to be
+  // spread evenly by value.
   function calc(b) {
     const cost = num(b.box) + num(b.ship);
     const fee = Math.min(Math.max(num(b.fee), 0), 90) / 100;
+    const fixed = Math.max(num(b.feeFixed), 0);
     const target = num(b.target) / 100;
+    const fill = Math.min(Math.max(b.fill === '' || b.fill == null ? 100 : num(b.fill), 1), 100) / 100;
     const step = Number(b.rounding) === 5 ? 5 : 1;
     const weights = b.weights || { top: 3, mid: 2, low: 1 };
     const weightOf = (spot) => Math.max(num(weights[spot.tier]), 0);
-    const needed = (cost * (1 + target)) / (1 - fee);
+    const n = b.spots.length;
+    const pricedFill = b.priceForFill ? fill : 1;
+    const needed = (cost * (1 + target) + n * pricedFill * fixed) / ((1 - fee) * pricedFill);
     const totalWeight = b.spots.reduce((sum, s) => sum + weightOf(s), 0);
     const prices = b.spots.map((s) => (totalWeight > 0 ? Math.round((needed * weightOf(s)) / totalWeight / step) * step : 0));
     const list = prices.reduce((sum, p) => sum + p, 0);
-    const profit = list * (1 - fee) - cost;
-    const breakEven = cost / (1 - fee);
+    const profitAtFill = (share) => list * share * (1 - fee) - n * share * fixed - cost;
+    const profit = profitAtFill(1);
+    const breakEven = (cost + n * fixed) / (1 - fee);
+    const perFullBreak = list * (1 - fee) - n * fixed;
     return {
       cost,
       fee,
+      fixed,
+      target,
+      fill,
       needed,
       prices,
       list,
       profit,
       breakEven,
+      profitAtFill,
+      fillProfit: profitAtFill(fill),
+      // Share of the break that has to sell before it stops losing money.
+      breakEvenFill: perFullBreak > 0 ? cost / perFullBreak : Infinity,
       returnPct: cost > 0 ? (profit / cost) * 100 : 0,
       safeDiscount: list > 0 ? Math.max(0, (1 - breakEven / list) * 100) : 0,
-      profitAt: (discountPct) => list * (1 - discountPct / 100) * (1 - fee) - cost,
+      profitAt: (discountPct) => list * (1 - discountPct / 100) * (1 - fee) - n * fixed - cost,
     };
   }
 
@@ -155,6 +176,7 @@
   const VIEWS = ['planner', 'breaks', 'history', 'account'];
   let discount = 15;
   let openBreakId = null;
+  let liveBreakId = null;
 
   function show(view) {
     if (!VIEWS.includes(view)) view = 'planner';
@@ -199,10 +221,14 @@
               <span class="input"><i>$</i><input data-field="box" type="text" inputmode="decimal" value="${esc(d.box)}" placeholder="1200"></span></label>
             <label class="field"><span>Shipping and supplies</span>
               <span class="input"><i>$</i><input data-field="ship" type="text" inputmode="decimal" value="${esc(d.ship)}" placeholder="60"></span></label>
-            <label class="field"><span>Platform and payment fees</span>
-              <span class="input"><input data-field="fee" type="text" inputmode="decimal" value="${esc(d.fee)}" placeholder="12"><i>%</i></span></label>
+            <label class="field"><span>Fees, percent of each sale</span>
+              <span class="input"><input data-field="fee" type="text" inputmode="decimal" value="${esc(d.fee)}" placeholder="10.9"><i>%</i></span></label>
+            <label class="field"><span>Fee per spot sold</span>
+              <span class="input"><i>$</i><input data-field="feeFixed" type="text" inputmode="decimal" value="${esc(d.feeFixed)}" placeholder="0.30"></span></label>
             <label class="field"><span>Profit goal</span>
               <span class="input"><input data-field="target" type="text" inputmode="decimal" value="${esc(d.target)}" placeholder="20"><i>%</i></span></label>
+            <label class="field"><span>Spots you expect to sell</span>
+              <span class="input"><input data-field="fill" type="text" inputmode="decimal" value="${esc(d.fill)}" placeholder="100"><i>%</i></span></label>
             <label class="field"><span>Break date</span>
               <span class="input"><input data-field="date" type="date" value="${esc(d.date)}"></span></label>
             <label class="field"><span>Round prices to</span>
@@ -211,6 +237,9 @@
                 <option value="5"${Number(d.rounding) === 5 ? ' selected' : ''}>Nearest $5</option>
               </select></span></label>
           </div>
+          <label class="check"><input type="checkbox" data-check="priceForFill"${d.priceForFill ? ' checked' : ''}>
+            <span>Set prices so I hit my goal even if only that share sells</span></label>
+          <button class="btn-ghost" type="button" data-action="whatnot-fees">Fill in commonly reported Whatnot fees</button>
           <details class="weights">
             <summary>Tier weights</summary>
             <p>How much more a Top or Mid spot costs than a Low spot. 3 / 2 / 1 means a Top spot costs three times a Low spot.</p>
@@ -219,7 +248,7 @@
                 <span class="input"><input data-weight="${t}" type="text" inputmode="decimal" value="${esc(d.weights[t])}"></span></label>`).join('')}
             </div>
           </details>
-          <p class="note">Use the fee rate your platform and payment processor actually charge. BreakMath never guesses card prices or fees.</p>
+          <p class="note">Add your platform's commission and payment processing percent together (for example 8 + 2.9 = 10.9). The per-spot fee is the fixed amount charged on each order. Processing is usually also charged on the shipping and tax your buyer pays, so real fees run slightly higher. Check your own payout statement.</p>
         </section>
 
         <section class="panel" aria-labelledby="spots-h">
@@ -249,10 +278,15 @@
         <dl class="stats">
           <div><dt>List all spots for</dt><dd id="s-list">$0</dd></div>
           <div><dt>Profit if every spot sells</dt><dd id="s-profit">$0</dd></div>
-          <div><dt>Return on cost</dt><dd id="s-return">0.0%</dd></div>
+          <div><dt id="s-fill-label">Profit at your fill rate</dt><dd id="s-fill">$0</dd></div>
           <div><dt>Break-even sales</dt><dd id="s-even">$0</dd></div>
         </dl>
         <p class="muted small" id="s-gap"></p>
+        <div class="fill-table">
+          <h3>Profit by how full the break gets</h3>
+          <div class="fill-cells" id="fill-cells"></div>
+          <p class="muted small" id="s-fill-note"></p>
+        </div>
         <div class="whatif">
           <label for="disc">If spots sell <strong id="s-disc">15%</strong> below list, you make <strong id="s-disc-profit">$0</strong></label>
           <input id="disc" type="range" min="0" max="50" step="1" value="${discount}">
@@ -280,8 +314,19 @@
     $('#s-list').textContent = money(r.list);
     $('#s-profit').textContent = money(r.profit);
     $('#s-profit').className = signClass(r.profit);
-    $('#s-return').textContent = pct(r.returnPct);
+    $('#s-fill-label').textContent = `Profit at ${Math.round(r.fill * 100)}% sold`;
+    $('#s-fill').textContent = money(r.fillProfit);
+    $('#s-fill').className = signClass(r.fillProfit);
     $('#s-even').textContent = money(r.breakEven);
+    $('#fill-cells').innerHTML = [50, 60, 70, 80, 90, 100].map((f) => {
+      const p = r.profitAtFill(f / 100);
+      return `<div><span>${f}%</span><strong class="${signClass(p)}">${money(p)}</strong></div>`;
+    }).join('');
+    $('#s-fill-note').textContent = r.cost <= 0
+      ? ''
+      : Number.isFinite(r.breakEvenFill) && r.breakEvenFill <= 1
+        ? `You need about ${Math.ceil(r.breakEvenFill * d.spots.length)} of ${d.spots.length} spots sold at list to break even (${pct(r.returnPct)} return on cost if they all sell). Assumes unsold spots are spread evenly by value.`
+        : 'At these prices the break loses money even if every spot sells.';
     const gap = r.list - r.needed;
     $('#s-gap').textContent = r.cost > 0 && Math.abs(gap) >= 0.5
       ? `Rounding puts the list ${money(Math.abs(gap))} ${gap < 0 ? 'below' : 'above'} the exact ${money(r.needed)} your goal needs.`
@@ -394,11 +439,24 @@
       </li>`;
   }
 
+  function soldSum(b, plan) {
+    return b.spots.reduce((sum, sp, i) => sum + num(sp.sold ?? plan.prices[i]), 0);
+  }
+
+  // Fees a platform would take on these sales, from the break's own fee settings.
+  function estimateFees(sales, soldCount, plan) {
+    return Math.round((sales * plan.fee + soldCount * plan.fixed) * 100) / 100;
+  }
+
   function breakDetail(b, plan, real) {
+    if (liveBreakId === b.id) return liveDetail(b, plan);
     const res = b.results || {};
     const mode = res.mode || 'total';
-    const soldTotal = res.soldTotal ?? plan.list;
-    const fees = res.fees ?? Math.round(num(soldTotal) * plan.fee);
+    const soldTotal = mode === 'spots' ? soldSum(b, plan) : (res.soldTotal ?? plan.list);
+    const soldCount = mode === 'spots'
+      ? b.spots.filter((sp, i) => num(sp.sold ?? plan.prices[i]) > 0).length
+      : Math.round(b.spots.length * Math.min(1, plan.list > 0 ? num(soldTotal) / plan.list : 1));
+    const fees = res.fees ?? estimateFees(num(soldTotal), soldCount, plan);
     return `
       <div class="break-detail">
         <dl class="stats compact">
@@ -407,8 +465,16 @@
           <div><dt>Planned profit</dt><dd class="${signClass(plan.profit)}">${money(plan.profit)}</dd></div>
           ${real ? `<div><dt>Actual profit</dt><dd class="${signClass(real.profit)}">${money(real.profit)}</dd></div>` : ''}
         </dl>
+        ${b.status === 'done' ? '' : `
+        <div class="go-live">
+          <div>
+            <h3>Running this break now?</h3>
+            <p class="muted small">Tap each spot as it sells and watch your profit build. Results save themselves when you end the show.</p>
+          </div>
+          <button class="btn" type="button" data-action="go-live" data-id="${esc(b.id)}">Start live tracker</button>
+        </div>`}
         <form class="results" data-form="results" data-id="${esc(b.id)}">
-          <h3>${b.status === 'done' ? 'Results' : 'Record results'}</h3>
+          <h3>${b.status === 'done' ? 'Results' : 'Or enter results afterward'}</h3>
           <div class="segmented" role="group" aria-label="How to enter sales">
             <button type="button" data-action="results-mode" data-id="${esc(b.id)}" data-mode="total" aria-pressed="${mode === 'total'}">One total</button>
             <button type="button" data-action="results-mode" data-id="${esc(b.id)}" data-mode="spots" aria-pressed="${mode === 'spots'}">Each spot</button>
@@ -419,15 +485,142 @@
             : `<ul class="sold-list">${b.spots.map((s, i) => `
                 <li><span>${esc(s.name)}</span>
                   <span class="input"><i>$</i><input name="sold-${i}" type="text" inputmode="decimal" value="${esc(s.sold ?? plan.prices[i])}" aria-label="${esc(s.name)} sold for"></span></li>`).join('')}</ul>`}
+          <details class="import">
+            <summary>Import sales from a list or CSV</summary>
+            <p class="muted small">Paste your sales, one per line (for example "Kansas City 340"), or paste or upload a CSV export. Each line is matched to a spot by its name. Spots with no match are set to $0, so check the result before saving.</p>
+            <textarea name="import" rows="5" placeholder="Kansas City, 340&#10;Dallas, 215&#10;Seattle, 90" aria-label="Sales to import"></textarea>
+            <div class="actions">
+              <button class="btn-ghost" type="button" data-action="apply-import" data-id="${esc(b.id)}">Match to spots</button>
+              <label class="btn-ghost file-btn">Upload CSV<input type="file" accept=".csv,text/csv,text/plain" data-action="import-file" data-id="${esc(b.id)}" hidden></label>
+            </div>
+          </details>
           <label class="field"><span>Fees taken from your payout</span>
             <span class="input"><i>$</i><input name="fees" type="text" inputmode="decimal" value="${esc(fees)}"></span></label>
           <div class="actions">
             <button class="btn" type="submit">${b.status === 'done' ? 'Update results' : 'Mark as done'}</button>
+            <button class="btn-ghost" type="button" data-action="rerun-break" data-id="${esc(b.id)}">Run it again</button>
             <button class="btn-ghost" type="button" data-action="edit-break" data-id="${esc(b.id)}">Edit plan</button>
             <button class="btn-ghost danger" type="button" data-action="delete-break" data-id="${esc(b.id)}">Delete</button>
           </div>
         </form>
       </div>`;
+  }
+
+  /* ----- Live tracker ----- */
+
+  function liveTotals(b, plan) {
+    const sold = b.spots.filter((sp) => sp.isSold);
+    const revenue = sold.reduce((sum, sp) => sum + num(sp.sold), 0);
+    const fees = estimateFees(revenue, sold.length, plan);
+    return { count: sold.length, revenue, fees, profit: revenue - fees - plan.cost, goal: plan.cost * plan.target };
+  }
+
+  function liveStatsHtml(b, plan) {
+    const t = liveTotals(b, plan);
+    const keep = 1 - plan.fee;
+    const message = t.profit < 0
+      ? `${money(Math.ceil(-t.profit / (keep || 1)))} more in sales to break even.`
+      : t.profit < t.goal
+        ? `Past break-even. ${money(Math.ceil((t.goal - t.profit) / (keep || 1)))} more in sales to hit your goal.`
+        : 'Goal hit. Everything from here is extra.';
+    return `
+      <dl class="stats compact">
+        <div><dt>Spots sold</dt><dd>${t.count} of ${b.spots.length}</dd></div>
+        <div><dt>Sales so far</dt><dd>${money(t.revenue)}</dd></div>
+        <div><dt>Fees so far</dt><dd>${money(t.fees)}</dd></div>
+        <div><dt>Profit so far</dt><dd class="${signClass(t.profit)}">${money(t.profit)}</dd></div>
+      </dl>
+      <p class="live-message ${t.profit < 0 ? '' : 'up'}">${message}</p>`;
+  }
+
+  function liveDetail(b, plan) {
+    return `
+      <div class="break-detail">
+        <div id="live-stats">${liveStatsHtml(b, plan)}</div>
+        <ul class="live-list">${b.spots.map((sp, i) => `
+          <li class="live-row ${sp.isSold ? 'is-sold' : ''}">
+            <span class="live-name">${esc(sp.name)}</span>
+            <span class="input"><i>$</i><input data-live-price="${i}" type="text" inputmode="decimal" value="${esc(sp.isSold ? sp.sold : plan.prices[i])}" aria-label="${esc(sp.name)} price"></span>
+            <button class="sold-btn" type="button" data-action="toggle-sold" data-index="${i}" aria-pressed="${Boolean(sp.isSold)}">${sp.isSold ? 'Sold' : 'Mark sold'}</button>
+          </li>`).join('')}</ul>
+        <div class="actions">
+          <button class="btn" type="button" data-action="end-show" data-id="${esc(b.id)}">End show and save results</button>
+          <button class="btn-ghost" type="button" data-action="leave-live">Back</button>
+        </div>
+        <p class="muted small">Change a price before marking it sold if the spot went for more or less than list.</p>
+      </div>`;
+  }
+
+  /* ----- Importing sales ----- */
+
+  function csvCells(line) {
+    const out = [];
+    let cur = '';
+    let quoted = false;
+    for (const ch of line) {
+      if (ch === '"') quoted = !quoted;
+      else if ((ch === ',' || ch === '\t') && !quoted) {
+        out.push(cur.trim());
+        cur = '';
+      } else cur += ch;
+    }
+    out.push(cur.trim());
+    return out;
+  }
+
+  // Match pasted sales to spots by name. Understands plain lines
+  // ("Kansas City 340") and CSV exports with a price-like column.
+  function parseSales(text, spots) {
+    const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+    if (!lines.length) return null;
+    const head = csvCells(lines[0]).map((c) => c.toLowerCase());
+    const wanted = ['sold price', 'sale price', 'price', 'subtotal', 'amount', 'total'];
+    let priceCol = -1;
+    if (head.length > 1 && !/\d/.test(head.join(''))) {
+      for (const w of wanted) {
+        priceCol = head.findIndex((h) => h.includes(w));
+        if (priceCol >= 0) break;
+      }
+    }
+    const rows = priceCol >= 0 ? lines.slice(1) : lines;
+    const order = spots.map((sp, i) => ({ i, name: sp.name.trim().toLowerCase() }))
+      .filter((x) => x.name)
+      .sort((a, b) => b.name.length - a.name.length);
+    const matched = new Map();
+    let missed = 0;
+    rows.forEach((line) => {
+      const lower = line.toLowerCase();
+      const hit = order.find((x) => !matched.has(x.i) && lower.includes(x.name));
+      let amount;
+      if (priceCol >= 0) amount = num(csvCells(line)[priceCol]);
+      else {
+        const rest = hit ? lower.replace(hit.name, ' ') : lower;
+        const nums = rest.match(/\d[\d,]*(\.\d+)?/g);
+        amount = nums ? num(nums[nums.length - 1]) : NaN;
+      }
+      if (hit && Number.isFinite(amount)) matched.set(hit.i, amount);
+      else missed += 1;
+    });
+    return { matched, missed };
+  }
+
+  function applyImport(id, text) {
+    const b = store.breaks.find((x) => x.id === id);
+    if (!b) return;
+    const result = parseSales(text, b.spots);
+    if (!result || !result.matched.size) {
+      toast("Couldn't match any line to a spot. Each line needs a spot name and a price.");
+      return;
+    }
+    b.spots.forEach((sp, i) => {
+      sp.sold = result.matched.has(i) ? result.matched.get(i) : 0;
+      sp.isSold = result.matched.has(i);
+    });
+    b.results = { ...(b.results || {}), mode: 'spots' };
+    delete b.results.fees;
+    saveStore();
+    renderBreaks();
+    toast(`Matched ${result.matched.size} of ${b.spots.length} spots${result.missed ? `, ${result.missed} lines skipped` : ''}. Check, then save.`);
   }
 
   function saveResults(form) {
@@ -439,6 +632,7 @@
     if (mode === 'spots') {
       b.spots.forEach((s, i) => {
         s.sold = num(data.get(`sold-${i}`));
+        s.isSold = s.sold > 0;
       });
       soldTotal = b.spots.reduce((sum, s) => sum + s.sold, 0);
     } else {
@@ -497,9 +691,14 @@
     }
     const total = rows.reduce((sum, r) => sum + r.a.profit, 0);
     const cost = rows.reduce((sum, r) => sum + r.a.cost, 0);
+    const feesPaid = rows.reduce((sum, r) => sum + r.a.fees, 0);
+    const sales = rows.reduce((sum, r) => sum + r.a.sales, 0);
+    const listed = rows.reduce((sum, r) => sum + calc(r.b).list, 0);
+    const goalHits = rows.filter((r) => r.a.profit >= r.a.cost * (num(r.b.target) / 100)).length;
     const months = groupBy(rows, (r) => String(r.b.date).slice(0, 7)).sort((a, b) => b.key.localeCompare(a.key));
     const products = groupBy(rows, (r) => r.b.product.trim()).sort((a, b) => b.profit - a.profit);
     const sorted = [...rows].sort((a, b) => b.a.profit - a.a.profit);
+    const losers = products.filter((g) => g.profit < 0);
     const table = (head, groups, label) => `
       <div class="table-wrap"><table>
         <thead><tr><th scope="col">${head}</th><th scope="col">Breaks</th><th scope="col">Sales</th><th scope="col">Profit</th></tr></thead>
@@ -516,6 +715,14 @@
         <div><dt>Average return on cost</dt><dd>${pct(cost > 0 ? (total / cost) * 100 : 0)}</dd></div>
         <div><dt>Best product</dt><dd class="text">${esc(products[0].key)}</dd></div>
       </dl>
+      <dl class="stats panel">
+        <div><dt>Hit your profit goal</dt><dd>${goalHits} of ${rows.length}</dd></div>
+        <div><dt>Sales vs list price</dt><dd>${pct(listed > 0 ? (sales / listed) * 100 : 0)}</dd></div>
+        <div><dt>Fees paid</dt><dd>${money(feesPaid)}</dd></div>
+        <div><dt>Fees as share of sales</dt><dd>${pct(sales > 0 ? (feesPaid / sales) * 100 : 0)}</dd></div>
+      </dl>
+      ${losers.length ? `<section class="panel warn"><h2>Products losing money</h2>
+        <p>${losers.map((g) => `<strong>${esc(g.key)}</strong> is down ${money(-g.profit)} over ${g.breaks} ${g.breaks === 1 ? 'break' : 'breaks'}.`).join(' ')} Raise the price, lower what you pay, or stop running ${losers.length === 1 ? 'it' : 'them'}.</p></section>` : ''}
       <section class="panel"><h2>By month</h2>${table('Month', months, niceMonth)}</section>
       <section class="panel"><h2>By product</h2>${table('Product', products, (k) => k)}</section>
       <section class="panel"><h2>Every break, best to worst</h2>
@@ -544,11 +751,11 @@
       if (/^[=+\-@]/.test(s) && typeof v === 'string') s = `'${s}`;
       return `"${s.replace(/"/g, '""')}"`;
     };
-    const header = ['Date', 'Product', 'Status', 'Spots', 'Box cost', 'Shipping and supplies', 'Total cost', 'List total', 'Planned profit', 'Sales', 'Fees', 'Actual profit'];
+    const header = ['Date', 'Product', 'Status', 'Spots', 'Box cost', 'Shipping and supplies', 'Total cost', 'Fee percent', 'Fee per spot', 'List total', 'Planned profit', 'Sales', 'Fees', 'Actual profit'];
     const lines = store.breaks.map((b) => {
       const p = calc(b);
       const a = actual(b);
-      return [b.date, b.product, b.status, b.spots.length, num(b.box), num(b.ship), p.cost, p.list, Math.round(p.profit * 100) / 100, a ? a.sales : '', a ? a.fees : '', a ? Math.round(a.profit * 100) / 100 : ''].map(cell).join(',');
+      return [b.date, b.product, b.status, b.spots.length, num(b.box), num(b.ship), p.cost, num(b.fee), num(b.feeFixed), p.list, Math.round(p.profit * 100) / 100, a ? a.sales : '', a ? a.fees : '', a ? Math.round(a.profit * 100) / 100 : ''].map(cell).join(',');
     });
     download(`breakmath-breaks-${today()}.csv`, [header.map(cell).join(','), ...lines].join('\n'), 'text/csv');
     toast('CSV downloaded.');
@@ -677,6 +884,66 @@
       saveStore();
       renderBreaks();
     },
+    'whatnot-fees'() {
+      store.draft.fee = '10.9';
+      store.draft.feeFixed = '0.30';
+      saveStore();
+      renderPlanner();
+      toast('Set to 8% commission + 2.9% + $0.30 processing. Check your own rates.');
+    },
+    'rerun-break'(el) {
+      const b = store.breaks.find((x) => x.id === el.dataset.id);
+      if (!b) return;
+      const { status, results, createdAt, id, ...plan } = structuredClone(b);
+      plan.spots = plan.spots.map((sp) => ({ name: sp.name, tier: sp.tier }));
+      store.draft = { ...newDraft(), ...plan, id: null, date: today() };
+      saveStore();
+      show('planner');
+      toast('Copied into the planner with the same teams and tiers.');
+    },
+    'go-live'(el) {
+      liveBreakId = el.dataset.id;
+      openBreakId = el.dataset.id;
+      renderBreaks();
+    },
+    'leave-live'() {
+      liveBreakId = null;
+      renderBreaks();
+    },
+    'toggle-sold'(el) {
+      const b = store.breaks.find((x) => x.id === liveBreakId);
+      if (!b) return;
+      const i = Number(el.dataset.index);
+      const sp = b.spots[i];
+      sp.isSold = !sp.isSold;
+      sp.sold = sp.isSold ? num($(`[data-live-price="${i}"]`).value) : 0;
+      saveStore();
+      const row = el.closest('.live-row');
+      row.classList.toggle('is-sold', sp.isSold);
+      el.setAttribute('aria-pressed', String(sp.isSold));
+      el.textContent = sp.isSold ? 'Sold' : 'Mark sold';
+      $('#live-stats').innerHTML = liveStatsHtml(b, calc(b));
+    },
+    'end-show'(el) {
+      const b = store.breaks.find((x) => x.id === el.dataset.id);
+      if (!b) return;
+      const plan = calc(b);
+      const t = liveTotals(b, plan);
+      if (!t.count && !confirm('No spots are marked sold. Save this break with $0 in sales?')) return;
+      b.spots.forEach((sp) => {
+        if (!sp.isSold) sp.sold = 0;
+      });
+      b.results = { mode: 'spots', soldTotal: t.revenue, fees: t.fees };
+      b.status = 'done';
+      liveBreakId = null;
+      if (saveStore()) {
+        renderBreaks();
+        toast(`Show saved. Profit: ${money(t.profit)}.`);
+      }
+    },
+    'apply-import'(el) {
+      applyImport(el.dataset.id, el.closest('form').querySelector('[name="import"]').value);
+    },
     'export-csv': exportCsv,
     backup() {
       download(`breakmath-backup-${today()}.json`, JSON.stringify(store, null, 2), 'application/json');
@@ -708,8 +975,18 @@
     if (t.dataset.field) d[t.dataset.field] = t.value;
     else if (t.dataset.weight) d.weights[t.dataset.weight] = t.value;
     else if (t.dataset.spotName !== undefined) d.spots[Number(t.dataset.spotName)].name = t.value;
+    else if (t.dataset.check) d[t.dataset.check] = t.checked;
     else if (t.id === 'disc') discount = Number(t.value);
-    else return;
+    else if (t.dataset.livePrice !== undefined) {
+      const b = store.breaks.find((x) => x.id === liveBreakId);
+      const sp = b && b.spots[Number(t.dataset.livePrice)];
+      if (sp && sp.isSold) {
+        sp.sold = num(t.value);
+        saveStore();
+        $('#live-stats').innerHTML = liveStatsHtml(b, calc(b));
+      }
+      return;
+    } else return;
     saveStore();
     updatePlanner();
   });
@@ -728,6 +1005,11 @@
       }
     }
     if (t.dataset.action === 'restore' && t.files[0]) restoreBackup(t.files[0]);
+    if (t.dataset.action === 'import-file' && t.files[0]) {
+      const reader = new FileReader();
+      reader.onload = () => applyImport(t.dataset.id, String(reader.result));
+      reader.readAsText(t.files[0]);
+    }
   });
 
   document.addEventListener('submit', (e) => {
