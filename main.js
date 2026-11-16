@@ -153,9 +153,12 @@ if ($('spots')) {
 
 /* ---------- Things that depend on config.js ---------- */
 
+// Saves interest rows to Supabase (interest.js). Off when accounts aren't set up.
+const INTEREST = window.BreakMathInterest || { enabled: false, source: '', record: () => Promise.resolve(false) };
+
 // The email form only appears once there is somewhere to send the emails.
 document.querySelectorAll('[data-updates]').forEach((el) => {
-  el.hidden = !WAITLIST_ENDPOINT;
+  el.hidden = !WAITLIST_ENDPOINT && !INTEREST.enabled;
 });
 
 // Pricing copy and the Get Pro button switch on once Stripe links are set.
@@ -176,6 +179,10 @@ if (ACCOUNTS && !SELLING) {
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 async function saveEmail(email) {
+  if (!WAITLIST_ENDPOINT && INTEREST.enabled) {
+    await INTEREST.record({ kind: 'updates', email, page: 'site' });
+    return;
+  }
   if (!WAITLIST_ENDPOINT) {
     console.warn('BreakMath: waitlistEndpoint is not set in config.js, so this signup was not sent anywhere.');
     try {
@@ -200,6 +207,7 @@ async function saveEmail(email) {
 
 // Where this visitor came from: the ad's utm_source, else the referring site.
 function signupSource() {
+  if (INTEREST.source) return INTEREST.source;
   const tagged = new URLSearchParams(location.search).get('utm_source');
   if (tagged) return tagged;
   try {
@@ -244,6 +252,56 @@ document.querySelectorAll('[data-waitlist]').forEach((form) => {
       message.textContent = "Couldn't sign you up. Check your connection and try again.";
       button.disabled = false;
       button.textContent = 'Get updates';
+    }
+  });
+});
+
+/* ---------- Pro interest (before Pro is on sale) ---------- */
+
+// "Get Pro" buttons that measure who would pay: a click is counted, then the
+// visitor is told Pro isn't on sale yet and can leave an email for launch day.
+document.querySelectorAll('[data-pro-interest]').forEach((box) => {
+  box.hidden = SELLING || !INTEREST.enabled;
+  if (box.hidden) return;
+  const buttons = box.querySelector('.pro-interest-buttons');
+  const form = box.querySelector('form');
+  const input = form.querySelector('input[type="email"]');
+  const submit = form.querySelector('button[type="submit"]');
+  const message = form.querySelector('.waitlist-msg');
+  let plan = 'monthly';
+
+  buttons.addEventListener('click', (e) => {
+    const button = e.target.closest('[data-plan]');
+    if (!button) return;
+    plan = button.dataset.plan;
+    INTEREST.record({ kind: 'pro-click', plan, page: 'site' }).catch(() => {});
+    if (window.goatcounter && window.goatcounter.count) {
+      window.goatcounter.count({ path: `pro-click-${plan}`, title: 'Clicked Get Pro', event: true });
+    }
+    buttons.hidden = true;
+    form.hidden = false;
+    input.focus();
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = input.value.trim();
+    if (!EMAIL_PATTERN.test(email)) {
+      message.textContent = 'Enter a valid email address.';
+      input.focus();
+      return;
+    }
+    message.textContent = '';
+    submit.disabled = true;
+    submit.textContent = 'Saving…';
+    try {
+      await INTEREST.record({ kind: 'pro-email', plan, email, page: 'site' });
+      form.classList.add('is-done');
+      message.textContent = "Thanks. We'll email you once, when Pro goes on sale. Until then the planner is free.";
+    } catch (err) {
+      message.textContent = "Couldn't save that. Check your connection and try again.";
+      submit.disabled = false;
+      submit.textContent = "Tell me when it's on sale";
     }
   });
 });

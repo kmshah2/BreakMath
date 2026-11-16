@@ -1058,7 +1058,48 @@
 
   function upgradePrompt(reason) {
     upgradeReason = reason;
+    interestReason = reason;
     show('account');
+  }
+
+  /* ----- Pro interest, while Pro isn't on sale ----- */
+
+  // "Get Pro" buttons that count who would pay before anything is for sale.
+  // A click is recorded, then the person can ask to hear when Pro launches.
+  const INTEREST = window.BreakMathInterest || { enabled: false, record: () => Promise.resolve(false) };
+  const INTEREST_KEY = 'breakmath:pro-interest';
+  let interestReason = '';
+  let interest = { step: 'buttons', plan: 'monthly' };
+  try {
+    if (localStorage.getItem(INTEREST_KEY) === 'done') interest.step = 'done';
+  } catch (err) { /* storage blocked */ }
+
+  function recordInterest(row) {
+    return INTEREST.record({ ...row, page: 'app', reason: interestReason || null }, account ? db : null);
+  }
+
+  function proInterestHtml() {
+    if (!INTEREST.enabled) return '';
+    if (interest.step === 'done') {
+      return '<p class="callout">Thanks. We\'ll email you once, when Pro goes on sale.</p>';
+    }
+    if (interest.step === 'email') {
+      return `<p class="callout">Pro isn't on sale yet, so there's nothing to pay. Want one email when it is?</p>
+        ${account ? '' : '<label class="field"><span>Email</span><span class="input"><input id="pro-email" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com"></span></label>'}
+        <div class="actions">
+          <button class="btn" type="button" data-action="pro-email">${account ? `Yes, email ${esc(account.email)}` : "Tell me when it's on sale"}</button>
+          <button class="btn-ghost" type="button" data-action="pro-dismiss">No thanks</button>
+        </div>`;
+    }
+    return `<div class="actions">
+        <button class="btn" type="button" data-action="pro-interest" data-plan="monthly">Get Pro, $15 a month</button>
+        <button class="btn-ghost" type="button" data-action="pro-interest" data-plan="yearly">Get Pro, $119 a year</button>
+      </div>`;
+  }
+
+  function renderProInterest() {
+    const box = $('#pro-interest');
+    if (box) box.innerHTML = proInterestHtml();
   }
 
   function renderAccount() {
@@ -1069,7 +1110,8 @@
         ? `<p class="plan-state">Free</p>
            ${upgradeReason ? `<p class="callout">${esc(upgradeReason)}</p>` : ''}
            <p>Free covers the planner, the live tracker and ${FREE_BREAKS_PER_MONTH} saved breaks a month. Profit history and the tax export are free too until Pro goes on sale.</p>
-           <p>Pro will add unlimited saved breaks and your own team templates for $15 a month. It isn't on sale yet.</p>`
+           <p>Pro will add unlimited saved breaks and your own team templates for $15 a month. It isn't on sale yet.</p>
+           <div id="pro-interest">${proInterestHtml()}</div>`
       : isPro()
         ? `<p class="plan-state up">Pro</p>
            <p>${AUTH ? 'Pro is active on your account, on every device you sign in on.' : 'Pro is unlocked in this browser. To use it on another device, open the link on your payment confirmation page there.'}</p>
@@ -1135,6 +1177,36 @@
   /* ---------- Events ---------- */
 
   const actions = {
+    'pro-interest'(el) {
+      interest = { step: 'email', plan: el.dataset.plan === 'yearly' ? 'yearly' : 'monthly' };
+      recordInterest({ kind: 'pro-click', plan: interest.plan }).catch(() => {});
+      renderProInterest();
+      const input = $('#pro-email');
+      if (input) input.focus();
+    },
+    async 'pro-email'(el) {
+      const input = $('#pro-email');
+      const email = account ? account.email : (input ? input.value.trim() : '');
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
+        toast('Enter a valid email address.');
+        if (input) input.focus();
+        return;
+      }
+      el.disabled = true;
+      try {
+        await recordInterest({ kind: 'pro-email', plan: interest.plan, email });
+        interest.step = 'done';
+        try { localStorage.setItem(INTEREST_KEY, 'done'); } catch (err) { /* storage blocked */ }
+        renderProInterest();
+      } catch (err) {
+        el.disabled = false;
+        toast("Couldn't save that. Check your connection and try again.");
+      }
+    },
+    'pro-dismiss'() {
+      interest.step = 'buttons';
+      renderProInterest();
+    },
     'new-break'() {
       store.draft = newDraft();
       saveStore();

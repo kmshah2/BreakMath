@@ -1152,3 +1152,34 @@ input[type="range"]::-moz-range-thumb {
 [data-when][hidden] {
   display: none;
 }
+
+/* Pro interest (before Pro is on sale) */
+
+.pro-interest [hidden] {
+  display: none;
+}
+
+.pro-interest {
+  display: grid;
+  gap: 10px;
+  margin-top: auto;
+}
+
+.pro-interest-buttons {
+  display: grid;
+  gap: 10px;
+}
+
+.pro-interest .waitlist {
+  grid-template-columns: 1fr;
+  max-width: none;
+}
+
+.pro-interest-note {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.pro-interest .waitlist-msg {
+  padding-left: 0;
+}

@@ -95,3 +95,29 @@ create policy "edit own templates" on public.templates for update
 
 drop policy if exists "delete own templates" on public.templates;
 create policy "delete own templates" on public.templates for delete using (user_id = auth.uid());
+
+-- Interest from before Pro is on sale: clicks on "Get Pro", emails asking to
+-- hear when it launches, and update sign-ups. Anyone can add a row; nobody can
+-- read them through the site. Read them in Supabase: Table Editor, "interest".
+create table if not exists public.interest (
+  id uuid primary key default gen_random_uuid(),
+  kind text not null check (kind in ('pro-click', 'pro-email', 'updates')),
+  plan text check (plan in ('monthly', 'yearly')),
+  email text check (email is null or (length(email) <= 254 and email ~ '^[^\s@]+@[^\s@]+\.[^\s@]{2,}$')),
+  source text check (source is null or length(source) <= 100),
+  reason text check (reason is null or length(reason) <= 200),
+  page text check (page is null or page in ('site', 'app')),
+  user_id uuid default auth.uid() references auth.users (id) on delete set null,
+  created_at timestamptz not null default now()
+);
+
+alter table public.interest enable row level security;
+grant insert on public.interest to anon, authenticated;
+
+drop policy if exists "anyone can register interest" on public.interest;
+create policy "anyone can register interest" on public.interest for insert to anon, authenticated
+  with check (user_id is null or user_id = auth.uid());
+
+-- Quick totals: paste into the SQL Editor any time.
+--   select kind, plan, page, count(*), count(distinct coalesce(email, user_id::text))
+--   from public.interest group by 1, 2, 3 order by 1, 2, 3;

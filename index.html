@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=4">
+<link rel="stylesheet" href="styles.css?v=5">
 </head>
 <body>
 
@@ -209,6 +209,19 @@
             <li>Tax export</li>
           </ul>
           <a class="btn" href="app.html#account" data-when="selling" hidden>Get Pro</a>
+          <div class="pro-interest" data-pro-interest hidden>
+            <div class="pro-interest-buttons">
+              <button class="btn" type="button" data-plan="monthly">Get Pro, $15 a month</button>
+              <button class="btn-outline" type="button" data-plan="yearly">Get Pro, $119 a year</button>
+            </div>
+            <form class="waitlist pro-interest-form" novalidate hidden>
+              <p class="pro-interest-note">Pro isn't on sale yet. Leave your email and we'll tell you once, when it is. Nothing to pay now.</p>
+              <label class="sr-only" for="email-pro">Email address</label>
+              <input id="email-pro" name="email" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com" required>
+              <button class="btn" type="submit">Tell me when it's on sale</button>
+              <p class="waitlist-msg" role="status"></p>
+            </form>
+          </div>
         </div>
       </div>
       <p class="fine" data-when="not-selling">Pro isn't on sale yet. Until it is, every feature is free.</p>
@@ -250,8 +263,9 @@
 
 <script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
 <script defer src="/_vercel/insights/script.js"></script>
-<script src="config.js?v=2"></script>
+<script src="config.js?v=3"></script>
 <script src="analytics.js" defer></script>
-<script src="main.js?v=2" defer></script>
+<script src="interest.js?v=1" defer></script>
+<script src="main.js?v=3" defer></script>
 </body>
 </html>

@@ -6,7 +6,7 @@ import sys, os
 
 OUT = sys.argv[1]
 EMAIL = 'kushshah1515@gmail.com'
-DATE = 'November 14, 2026'
+DATE = 'November 16, 2026'
 MAIL = f'<a href="mailto:{EMAIL}">{EMAIL}</a>'
 
 TEMPLATE = '''<!doctype html>
@@ -89,7 +89,8 @@ PAGES['privacy.html'] = ('Privacy Policy', 'What BreakMath collects, why, and th
 <ul>
 <li><strong>Account details</strong>, when you create an account: your email address and a password. Passwords are stored in scrambled (hashed) form by our sign-in provider, Supabase; we cannot read them.</li>
 <li><strong>Your breaks</strong>: everything you save in the app, including products, costs, fees, team lists, prices, results and profit history, is stored with your account.</li>
-<li><strong>Email address</strong>, when you sign up for product updates. We save it with the time you signed up and the ad campaign or website that sent you to us.</li>
+<li><strong>Email address</strong>, when you sign up for product updates or ask to hear when Pro goes on sale. We save it with the time you signed up and the ad campaign or website that sent you to us.</li>
+<li><strong>Interest in Pro</strong>, when you click a "Get Pro" button before Pro is on sale. We record the click, the plan you chose, the time, the ad campaign or website that sent you to us and, if you are signed in, your account. We use this only to decide whether and when to offer Pro.</li>
 <li><strong>Payment and subscription details</strong>, when you buy Pro. Stripe collects your name, email address, billing country and card details. We can see your name, email, plan, payment history and the last four digits and brand of your card in our Stripe account. We never receive or store your full card number.</li>
 <li><strong>Anything you send us</strong>, when you email us, including your email address and the contents of your message.</li>
 </ul>
@@ -112,6 +113,7 @@ PAGES['privacy.html'] = ('Privacy Policy', 'What BreakMath collects, why, and th
 <li>To run your account, save your breaks and show them to you on any device.</li>
 <li>To provide Pro, take payment through Stripe, and handle billing questions, cancellations and refunds.</li>
 <li>To send a confirmation email when you sign up for updates, and occasional emails about new features, pricing and requests for feedback.</li>
+<li>If you asked to hear when Pro goes on sale, to send you one email when it does.</li>
 <li>To reply when you contact us.</li>
 <li>To understand how many people visit, where they come from and whether they use the product, so we can improve it.</li>
 <li>To keep the site secure and working, and to prevent abuse.</li>
@@ -125,7 +127,7 @@ PAGES['privacy.html'] = ('Privacy Policy', 'What BreakMath collects, why, and th
 <h2>5. How we share information</h2>
 <p>We do not sell personal information, and we do not share it for cross-context behavioral advertising. We share it only as follows:</p>
 <ul>
-<li><strong>Service providers</strong> that help us run the site and act on our instructions: hosting and analytics (Vercel), accounts and database (Supabase), payments (Stripe), analytics (GoatCounter), fonts (Google), and Google (Google Sheets and Gmail), which we use to store email sign-ups and send emails.</li>
+<li><strong>Service providers</strong> that help us run the site and act on our instructions: hosting and analytics (Vercel), accounts and database (Supabase), payments (Stripe), analytics (GoatCounter), fonts (Google), and Google (Google Sheets and Gmail), which we may use to store email sign-ups and send emails. Email sign-ups and Pro interest are stored in Supabase.</li>
 <li><strong>Legal reasons</strong>, if we believe disclosure is required by law or legal process, or needed to protect the rights, property or safety of BreakMath, our users or others.</li>
 <li><strong>Business changes</strong>, if BreakMath is reorganized, merged or sold. The recipient would have to honor this policy or tell you about any change.</li>
 <li><strong>With your permission</strong>, in any other case.</li>
@@ -306,10 +308,10 @@ PAGES['cookies.html'] = ('Cookie Policy', 'How BreakMath uses cookies and simila
 <h2>4. Other services your browser contacts</h2>
 <ul>
 <li><strong>Vercel</strong> hosts the site, counts visits without cookies, and receives the technical details of each request, including your IP address.</li>
-<li><strong>Supabase</strong> handles sign-in and stores your account and saved breaks.</li>
+<li><strong>Supabase</strong> handles sign-in and stores your account, saved breaks, email sign-ups and Pro interest.</li>
 <li><strong>Google Fonts</strong> delivers the typeface, so your browser sends a request, including your IP address, to Google.</li>
 <li><strong>GoatCounter</strong> receives the visit information described above.</li>
-<li><strong>Google</strong> receives your email address if you sign up for updates, because sign-ups are stored in Google Sheets.</li>
+<li><strong>Google</strong> may receive your email address if you sign up for updates, if we store sign-ups in Google Sheets.</li>
 <li><strong>Stripe</strong> handles checkout on its own website when you buy Pro, and sets its own cookies there for security and fraud prevention.</li>
 </ul>
 <p>We do not use advertising pixels or social media trackers.</p>
