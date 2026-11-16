@@ -163,6 +163,13 @@ const SELLING = Boolean((window.BREAKMATH || {}).stripeMonthlyLink || (window.BR
 document.querySelectorAll('[data-when]').forEach((el) => {
   el.hidden = (el.dataset.when === 'selling') !== SELLING;
 });
+// With accounts on, the 3-break limit applies before Pro is on sale too.
+const ACCOUNTS = Boolean((window.BREAKMATH || {}).supabaseUrl && (window.BREAKMATH || {}).supabaseAnonKey);
+if (ACCOUNTS && !SELLING) {
+  document.querySelectorAll('[data-when="not-selling"]').forEach((el) => {
+    el.textContent = "Pro isn't on sale yet. Until it is, profit history and the tax export are free.";
+  });
+}
 
 /* ---------- Email updates ---------- */
 

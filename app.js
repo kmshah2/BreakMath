@@ -119,7 +119,14 @@
 
   let store = loadStore();
   let account = null; // { id, email, pro } once signed in
-  const isPro = () => (AUTH ? Boolean(account && account.pro) : store.pro) || !SELLING;
+  // Has this person paid for Pro?
+  const paid = () => (AUTH ? Boolean(account && account.pro) : Boolean(store.pro));
+  // Profit history and the tax export stay open to everyone until Pro is on sale.
+  const isPro = () => paid() || !SELLING;
+  // Saved breaks and templates: with accounts on, the database holds free
+  // accounts to the limit whether or not Pro is on sale yet, so the app does too.
+  const savesLimited = () => (AUTH ? !paid() : !isPro());
+  const proPitch = () => (SELLING ? 'Pro saves as many as you run.' : "Pro, with unlimited saves, isn't on sale yet.");
 
   /* ---------- Accounts and cloud saves ---------- */
 
@@ -169,7 +176,7 @@
           // The server refused the row: this account is over its free limit.
           store[table] = store[table].filter((x) => x.id !== id);
           if (table === 'breaks') {
-            upgradePrompt(`The free plan saves ${FREE_BREAKS_PER_MONTH} breaks a month. Pro saves as many as you run.`);
+            upgradePrompt(`The free plan saves ${FREE_BREAKS_PER_MONTH} breaks a month. ${proPitch()}`);
           } else {
             upgradePrompt('Saving your own team templates is part of Pro.');
           }
@@ -193,7 +200,7 @@
   }
 
   function setPill() {
-    $('#plan-pill').textContent = !SELLING ? 'Early access' : isPro() ? 'Pro' : 'Free';
+    $('#plan-pill').textContent = paid() ? 'Pro' : SELLING || AUTH ? 'Free' : 'Early access';
   }
 
   function signedOutView(mode = 'signup', message = '') {
@@ -524,8 +531,8 @@
       const i = store.breaks.findIndex((b) => b.id === d.id);
       if (i >= 0) store.breaks[i] = { ...store.breaks[i], ...structuredClone(d) };
     } else {
-      if (!isPro() && breaksThisMonth() >= FREE_BREAKS_PER_MONTH) {
-        upgradePrompt(`The free plan saves ${FREE_BREAKS_PER_MONTH} breaks a month. Pro saves as many as you run.`);
+      if (savesLimited() && breaksThisMonth() >= FREE_BREAKS_PER_MONTH) {
+        upgradePrompt(`The free plan saves ${FREE_BREAKS_PER_MONTH} breaks a month. ${proPitch()}`);
         return;
       }
       store.breaks.unshift({ ...structuredClone(d), id: uid(), status: 'planned', createdAt: today() });
@@ -568,7 +575,7 @@
       <div class="page-head">
         <div>
           <h1>Your breaks</h1>
-          ${isPro() ? '' : `<p>${left > 0 ? `${left} of ${FREE_BREAKS_PER_MONTH} free saves left this month.` : 'You have used this month\'s free saves.'} <a href="#account" data-view="account">See Pro</a></p>`}
+          ${!savesLimited() ? '' : `<p>${left > 0 ? `${left} of ${FREE_BREAKS_PER_MONTH} free saves left this month.` : 'You have used this month\'s free saves.'} <a href="#account" data-view="account">${SELLING ? 'See Pro' : 'About your plan'}</a></p>`}
         </div>
         <button class="btn" type="button" data-action="new-break">New break</button>
       </div>
@@ -928,9 +935,14 @@
   }
 
   function renderAccount() {
-    const plan = !SELLING
+    const plan = !SELLING && !AUTH
       ? `<p class="plan-state">Early access</p>
          <p>Everything is unlocked and free while BreakMath is in early access. Paid plans are not on sale yet.</p>`
+      : !SELLING && !paid()
+        ? `<p class="plan-state">Free</p>
+           ${upgradeReason ? `<p class="callout">${esc(upgradeReason)}</p>` : ''}
+           <p>Free covers the planner, the live tracker and ${FREE_BREAKS_PER_MONTH} saved breaks a month. Profit history and the tax export are free too until Pro goes on sale.</p>
+           <p>Pro will add unlimited saved breaks and your own team templates for $15 a month. It isn't on sale yet.</p>`
       : isPro()
         ? `<p class="plan-state up">Pro</p>
            <p>${AUTH ? 'Pro is active on your account, on every device you sign in on.' : 'Pro is unlocked in this browser. To use it on another device, open the link on your payment confirmation page there.'}</p>
@@ -1022,7 +1034,7 @@
       names[names.length - 1].select();
     },
     'save-template'() {
-      if (!isPro()) return upgradePrompt('Saving your own team templates is part of Pro.');
+      if (savesLimited()) return upgradePrompt(SELLING ? 'Saving your own team templates is part of Pro.' : "Saving your own team templates is part of Pro, which isn't on sale yet.");
       const name = prompt('Name this team list', store.draft.product || 'My template');
       if (!name || !name.trim()) return;
       store.templates.unshift({ id: uid(), name: name.trim().slice(0, 60), spots: structuredClone(store.draft.spots) });
