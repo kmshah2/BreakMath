@@ -4,6 +4,7 @@ import { Reel, SCENE_COMPONENTS } from "./Reel";
 import { FPS, SCRIPT, shortFrames, TOTAL_FRAMES } from "./script";
 import { FeesAd } from "./shorts/FeesAd";
 import { GaugeAd } from "./shorts/GaugeAd";
+import { PacksAd } from "./shorts/PacksAd";
 import { TiersAd } from "./shorts/TiersAd";
 
 const WIDTH = 1080;
@@ -36,6 +37,7 @@ export const RemotionRoot: React.FC = () => {
             ["fees", FeesAd],
             ["tiers", TiersAd],
             ["whatif", GaugeAd],
+            ["packs", PacksAd],
           ] as const
         ).map(([id, component]) => (
           <Composition

@@ -15,7 +15,7 @@ export const REEL_LINES = [
   { id: "06-cta", baseFrames: 55, voiceover: "It's free. Link in bio." },
 ] as const;
 
-// Three shorter ads, each with its own look. Every one has a hook, a demo and
+// Four shorter ads, each with its own look. Every one has a hook, a demo and
 // the closing call. The spoken hook names the audience first. All numbers are
 // the 6-spot sample break: $1,200 box + $60 shipping, fees of 10.9% plus $0.30
 // a spot, 20% profit goal.
@@ -41,6 +41,15 @@ export const SHORT_LINES = {
     demoVoiceover:
       "At list price, this break makes $253. At 10% under, $101. At 20% under, it loses money. BreakMath shows your floor before you go live.",
     demoBaseFrames: 280,
+  },
+  // The pack wall, for card-game breakers. A 36-pack box: $160 + $10 shipping,
+  // same fees. $5 a pack sells out for $180 and loses $20. $7 a pack lists at
+  // $252 and makes $44.
+  packs: {
+    hookVoiceover: "Pokémon breakers: you can sell every pack and still lose money.",
+    hookBaseFrames: 100,
+    demoVoiceover: "36 packs at $5 each sells out, and loses $20. BreakMath does the fee math: $7 a pack, $44 profit.",
+    demoBaseFrames: 200,
   },
 } as const;
 

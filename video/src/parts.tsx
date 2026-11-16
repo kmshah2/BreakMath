@@ -366,7 +366,7 @@ export const glass: React.CSSProperties = {
 };
 
 // "For card breakers" tag: tells a cold viewer who this is for.
-export const AudienceTag: React.FC = () => {
+export const AudienceTag: React.FC<{ text?: string }> = ({ text = "For card breakers" }) => {
   const frame = useCurrentFrame();
   return (
     <Interactive.Div
@@ -385,7 +385,7 @@ export const AudienceTag: React.FC = () => {
         transformOrigin: "left center",
       }}
     >
-      For card breakers
+      {text}
     </Interactive.Div>
   );
 };

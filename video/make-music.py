@@ -30,6 +30,10 @@ VARIANTS = {
     "whatif": dict(bpm=116, key=329.63, lead="pulse", kick=[0, 8, 11], hats=1, roots=[0, 0, -1, -1],
                    a=[0, 0, None, 0, 1, None, 0, None, 0, 0, None, 0, 3, None, 1, None],
                    b=[0, 0, None, 0, 1, None, 0, None, 7, None, 6, None, 3, None, 1, 0]),
+    # Pack ad: bright and quick, arcade-style square lead over a steady kick.
+    "packs": dict(bpm=138, key=523.25, lead="pulse", kick=[0, 4, 8, 12], hats=1, roots=[0, 5, -3, 2],
+                  a=[0, 4, 7, 12, 7, 4, 0, None, 2, 5, 9, 14, 9, 5, 2, None],
+                  b=[0, 4, 7, 12, 7, 4, 0, None, 12, 11, 9, 7, 5, 4, 2, 0]),
 }
 
 rng = np.random.default_rng(11)
@@ -195,5 +199,8 @@ def render(name, v):
     print(f"Wrote {path} ({len(mix) / SR:.1f}s, {v['bpm']} BPM, {v['lead']} lead, rms {rms:.3f})")
 
 
+# Pass track names to make only those: python3 make-music.py packs
+import sys
 for track, settings in VARIANTS.items():
-    render(track, settings)
+    if not sys.argv[1:] or track in sys.argv[1:]:
+        render(track, settings)

@@ -11,7 +11,7 @@
 
 import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
 import { execFileSync } from "node:child_process";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { ALL_CLIPS } from "./src/lines.ts";
 
 if (!process.env.ELEVENLABS_API_KEY) {
@@ -25,9 +25,14 @@ const modelId = process.env.ELEVENLABS_MODEL || "eleven_v4";
 
 const client = new ElevenLabsClient();
 mkdirSync("public/voiceover", { recursive: true });
-const timing: Record<string, number> = {};
+// Name clips after the command to record only those and keep the rest:
+//   npm run voiceover -- short-packs-hook short-packs-demo
+const only = process.argv.slice(2);
+const timing: Record<string, number> =
+  only.length && existsSync("src/voice-timing.json") ? JSON.parse(readFileSync("src/voice-timing.json", "utf8")) : {};
 
 for (const clip of ALL_CLIPS) {
+  if (only.length && !only.includes(clip.id)) continue;
   const file = `public/voiceover/${clip.id}.mp3`;
   try {
     const audio = await client.textToSpeech.convert(voiceId, {

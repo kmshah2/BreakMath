@@ -45,8 +45,9 @@ Same brand (logo, foil colours, typeface, the "For card breakers" tag), four dif
 | `Short-fees` | A receipt printing out | `src/shorts/FeesAd.tsx` |
 | `Short-tiers` | Spotlight stage with podiums | `src/shorts/TiersAd.tsx` |
 | `Short-whatif` | Speedometer gauge | `src/shorts/GaugeAd.tsx` |
+| `Short-packs` | Wall of foil packs, for card-game breakers | `src/shorts/PacksAd.tsx` |
 
-`src/shorts/Ad.tsx` is the frame the three shorter ads share (voice, music, closing call). Each ad has its own music track, `public/audio/music-<ad>.mp3`.
+`src/shorts/Ad.tsx` is the frame the shorter ads share (voice, music, closing call). Each ad has its own music track, `public/audio/music-<ad>.mp3`.
 
 ## Sound
 
