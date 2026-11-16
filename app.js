@@ -25,7 +25,37 @@
     'Basketball · 30 teams': ['Atlanta', 'Boston', 'Brooklyn', 'Charlotte', 'Chicago', 'Cleveland', 'Dallas', 'Denver', 'Detroit', 'Golden State', 'Houston', 'Indiana', 'LA Clippers', 'LA Lakers', 'Memphis', 'Miami', 'Milwaukee', 'Minnesota', 'New Orleans', 'New York', 'Oklahoma City', 'Orlando', 'Philadelphia', 'Phoenix', 'Portland', 'Sacramento', 'San Antonio', 'Toronto', 'Utah', 'Washington'],
     'Baseball · 30 teams': ['Arizona', 'Athletics', 'Atlanta', 'Baltimore', 'Boston', 'Chi Cubs', 'Chi White Sox', 'Cincinnati', 'Cleveland', 'Colorado', 'Detroit', 'Houston', 'Kansas City', 'LA Angels', 'LA Dodgers', 'Miami', 'Milwaukee', 'Minnesota', 'NY Mets', 'NY Yankees', 'Philadelphia', 'Pittsburgh', 'San Diego', 'San Francisco', 'Seattle', 'St. Louis', 'Tampa Bay', 'Texas', 'Toronto', 'Washington'],
     'Hockey · 32 teams': ['Anaheim', 'Boston', 'Buffalo', 'Calgary', 'Carolina', 'Chicago', 'Colorado', 'Columbus', 'Dallas', 'Detroit', 'Edmonton', 'Florida', 'Los Angeles', 'Minnesota', 'Montreal', 'Nashville', 'New Jersey', 'NY Islanders', 'NY Rangers', 'Ottawa', 'Philadelphia', 'Pittsburgh', 'San Jose', 'Seattle', 'St. Louis', 'Tampa Bay', 'Toronto', 'Utah', 'Vancouver', 'Vegas', 'Washington', 'Winnipeg'],
+    'Soccer (MLS) · 30 clubs': ['Atlanta', 'Austin', 'Charlotte', 'Chicago', 'Cincinnati', 'Colorado', 'Columbus', 'D.C.', 'Dallas', 'Houston', 'Kansas City', 'LA Galaxy', 'LAFC', 'Miami', 'Minnesota', 'Montreal', 'Nashville', 'New England', 'NY City', 'NY Red Bulls', 'Orlando', 'Philadelphia', 'Portland', 'Salt Lake', 'San Diego', 'San Jose', 'Seattle', 'St. Louis', 'Toronto', 'Vancouver'],
+    'Racing (F1) · 11 teams': ['Alpine', 'Aston Martin', 'Audi', 'Cadillac', 'Ferrari', 'Haas', 'McLaren', 'Mercedes', 'Racing Bulls', 'Red Bull', 'Williams'],
+    "Women's basketball · 15 teams": ['Atlanta', 'Chicago', 'Connecticut', 'Dallas', 'Golden State', 'Indiana', 'Las Vegas', 'Los Angeles', 'Minnesota', 'New York', 'Phoenix', 'Portland', 'Seattle', 'Toronto', 'Washington'],
     'Blank · 10 spots': Array.from({ length: 10 }, (_, i) => `Spot ${i + 1}`),
+    'Football · 8 divisions': ['AFC East', 'AFC North', 'AFC South', 'AFC West', 'NFC East', 'NFC North', 'NFC South', 'NFC West'],
+    'Basketball · 6 divisions': ['Atlantic', 'Central', 'Southeast', 'Northwest', 'Pacific', 'Southwest'],
+    'Baseball · 6 divisions': ['AL East', 'AL Central', 'AL West', 'NL East', 'NL Central', 'NL West'],
+    'Hockey · 4 divisions': ['Atlantic', 'Metropolitan', 'Central', 'Pacific'],
+  };
+
+  // How the break is sold. Team and division breaks price each spot by tier;
+  // random-team and pack breaks charge the same for every spot.
+  const FORMATS = {
+    pyt: { label: 'Pick your team', flat: false, kind: 'teams', intro: 'Enter what the break costs you, rate each team, and get a price for every spot.' },
+    random: { label: 'Random team', flat: true, kind: 'teams', intro: 'Enter what the break costs you and get the one price every spot needs. Teams are assigned at random on stream.' },
+    divisions: { label: 'Divisions', flat: false, kind: 'divisions', intro: 'Enter what the break costs you, rate each division, and get a price for every spot.' },
+    packs: { label: 'Packs', flat: true, kind: 'packs', intro: 'Enter what the box costs you and how many packs go in each spot, and get the price every spot needs.' },
+  };
+  const formatOf = (b) => FORMATS[b.format] || FORMATS.pyt;
+  const DIVISION_PRESETS = Object.keys(PRESETS).filter((name) => name.endsWith('divisions'));
+  const TEAM_PRESETS = Object.keys(PRESETS).filter((name) => !name.endsWith('divisions'));
+
+  // Common sealed box sizes for card games. Sizes vary by product, so the
+  // pack count stays editable.
+  const BOXES = {
+    'Pokémon booster box · 36 packs': 36,
+    'Pokémon Elite Trainer Box · 9 packs': 9,
+    'One Piece booster box · 24 packs': 24,
+    'Lorcana booster box · 24 packs': 24,
+    'Magic play booster box · 30 packs': 30,
+    'Yu-Gi-Oh! booster box · 24 packs': 24,
   };
 
   /* ---------- Helpers ---------- */
@@ -72,9 +102,22 @@
     return names.map((name) => ({ name, tier: 'mid' }));
   }
 
+  // Spots for a pack break: the box split into equal groups of packs.
+  function packSpots(packs) {
+    const box = Math.min(Math.max(Math.floor(num(packs.box)), 0), 400);
+    const per = Math.max(Math.floor(num(packs.per)), 1);
+    const count = Math.floor(box / per);
+    return Array.from({ length: count }, (_, i) => ({
+      name: per === 1 ? `Pack ${i + 1}` : `Spot ${i + 1} · ${per} packs`,
+      tier: 'mid',
+    }));
+  }
+
   function newDraft() {
     return {
       id: null,
+      format: 'pyt',
+      packs: { box: '36', per: '1' },
       product: '',
       date: today(),
       box: '',
@@ -292,7 +335,8 @@
     const fill = Math.min(Math.max(b.fill === '' || b.fill == null ? 100 : num(b.fill), 1), 100) / 100;
     const step = Number(b.rounding) === 5 ? 5 : 1;
     const weights = b.weights || { top: 3, mid: 2, low: 1 };
-    const weightOf = (spot) => Math.max(num(weights[spot.tier]), 0);
+    const flat = formatOf(b).flat;
+    const weightOf = (spot) => (flat ? 1 : Math.max(num(weights[spot.tier]), 0));
     const n = b.spots.length;
     const pricedFill = b.priceForFill ? fill : 1;
     const needed = (cost * (1 + target) + n * pricedFill * fixed) / ((1 - fee) * pricedFill);
@@ -359,27 +403,53 @@
   /* ----- Planner ----- */
 
   function templateOptions() {
+    const kind = formatOf(store.draft).kind;
+    if (kind === 'packs') {
+      const boxes = Object.keys(BOXES).map((name) => `<option value="box:${esc(name)}">${esc(name)}</option>`).join('');
+      return `<option value="">Load a box size…</option>${boxes}`;
+    }
     const own = store.templates.map((t) => `<option value="own:${esc(t.id)}">${esc(t.name)}</option>`).join('');
-    const built = Object.keys(PRESETS).map((name) => `<option value="preset:${esc(name)}">${esc(name)}</option>`).join('');
-    return `<option value="">Load a team list…</option>${own ? `<optgroup label="Your templates">${own}</optgroup>` : ''}<optgroup label="Built in">${built}</optgroup>`;
+    const names = kind === 'divisions' ? DIVISION_PRESETS : TEAM_PRESETS;
+    const built = names.map((name) => `<option value="preset:${esc(name)}">${esc(name)}</option>`).join('');
+    return `<option value="">Load a ${kind === 'divisions' ? 'division' : 'team'} list…</option>${own ? `<optgroup label="Your templates">${own}</optgroup>` : ''}<optgroup label="Built in">${built}</optgroup>`;
+  }
+
+  function spotRowsHtml(d) {
+    const flat = formatOf(d).flat;
+    return d.spots.map((s, i) => `
+              <li class="spot-row">
+                <input class="spot-name" data-spot-name="${i}" type="text" value="${esc(s.name)}" aria-label="Spot name">
+                ${flat ? '' : `<button class="tier" type="button" data-action="cycle-tier" data-index="${i}" data-tier="${s.tier}">${TIER_LABEL[s.tier]}</button>`}
+                <span class="spot-price" data-price="${i}">$0</span>
+                <button class="icon-btn" type="button" data-action="remove-spot" data-index="${i}" aria-label="Remove ${esc(s.name)}">×</button>
+              </li>`).join('');
   }
 
   function renderPlanner() {
     const d = store.draft;
+    const fmt = formatOf(d);
+    const packs = d.packs || { box: '36', per: '1' };
     $('#view-planner').innerHTML = `
       <div class="page-head">
         <div>
           <h1>${d.id ? 'Edit break' : 'Price a break'}</h1>
-          <p>Enter what the break costs you, rate each team, and get a price for every spot.</p>
+          <p>${fmt.intro}</p>
         </div>
         <button class="btn-ghost" type="button" data-action="new-break">Start over</button>
+      </div>
+
+      <div class="format-pick">
+        <span class="muted small" id="format-h">Break format</span>
+        <div class="segmented" role="group" aria-labelledby="format-h">
+          ${Object.entries(FORMATS).map(([key, f]) => `<button type="button" data-action="set-format" data-format="${key}" aria-pressed="${f === fmt}">${f.label}</button>`).join('')}
+        </div>
       </div>
 
       <div class="planner-grid">
         <section class="panel" aria-labelledby="numbers-h">
           <h2 id="numbers-h">Your numbers</h2>
           <label class="field"><span>Product</span>
-            <span class="input"><input data-field="product" type="text" value="${esc(d.product)}" placeholder="2026 Football Hobby Case" autocomplete="off"></span></label>
+            <span class="input"><input data-field="product" type="text" value="${esc(d.product)}" placeholder="${fmt.kind === 'packs' ? 'Pokémon booster box' : '2026 Football Hobby Case'}" autocomplete="off"></span></label>
           <div class="fields">
             <label class="field"><span>Box or case cost</span>
               <span class="input"><i>$</i><input data-field="box" type="text" inputmode="decimal" value="${esc(d.box)}" placeholder="1200"></span></label>
@@ -404,7 +474,7 @@
           <label class="check"><input type="checkbox" data-check="priceForFill"${d.priceForFill ? ' checked' : ''}>
             <span>Set prices so I hit my goal even if only that share sells</span></label>
           <button class="btn-ghost" type="button" data-action="whatnot-fees">Fill in commonly reported Whatnot fees</button>
-          <details class="weights">
+          <details class="weights"${fmt.flat ? ' hidden' : ''}>
             <summary>Tier weights</summary>
             <p>How much more a Top or Mid spot costs than a Low spot. 3 / 2 / 1 means a Top spot costs three times a Low spot.</p>
             <div class="fields three">
@@ -421,20 +491,21 @@
             <span class="muted" id="tier-counts"></span>
           </div>
           <div class="spot-tools">
-            <span class="input"><select data-action="load-template" aria-label="Load a team list">${templateOptions()}</select></span>
-            <button class="btn-ghost" type="button" data-action="save-template">Save as template</button>
+            <span class="input"><select data-action="load-template" aria-label="Load a list">${templateOptions()}</select></span>
+            ${fmt.kind === 'packs' ? '' : '<button class="btn-ghost" type="button" data-action="save-template">Save as template</button>'}
           </div>
-          <p class="muted small">Tap a tier to change it. Rename or remove any spot.</p>
-          <ul class="spot-list" id="spot-list">
-            ${d.spots.map((s, i) => `
-              <li class="spot-row">
-                <input class="spot-name" data-spot-name="${i}" type="text" value="${esc(s.name)}" aria-label="Spot name">
-                <button class="tier" type="button" data-action="cycle-tier" data-index="${i}" data-tier="${s.tier}">${TIER_LABEL[s.tier]}</button>
-                <span class="spot-price" data-price="${i}">$0</span>
-                <button class="icon-btn" type="button" data-action="remove-spot" data-index="${i}" aria-label="Remove ${esc(s.name)}">×</button>
-              </li>`).join('')}
+          ${fmt.kind === 'packs' ? `
+          <div class="fields">
+            <label class="field"><span>Packs in the box</span>
+              <span class="input"><input data-packs="box" type="text" inputmode="numeric" value="${esc(packs.box)}" placeholder="36"></span></label>
+            <label class="field"><span>Packs in each spot</span>
+              <span class="input"><input data-packs="per" type="text" inputmode="numeric" value="${esc(packs.per)}" placeholder="1"></span></label>
+          </div>
+          <p class="muted small" id="packs-note"></p>` : ''}
+          <p class="muted small">${fmt.flat ? 'Every spot costs the same. Rename or remove any spot.' : 'Tap a tier to change it. Rename or remove any spot.'}</p>
+          <ul class="spot-list${fmt.flat ? ' is-flat' : ''}" id="spot-list">${spotRowsHtml(d)}
           </ul>
-          <button class="btn-ghost" type="button" data-action="add-spot">Add a spot</button>
+          ${fmt.kind === 'packs' ? '' : '<button class="btn-ghost" type="button" data-action="add-spot">Add a spot</button>'}
         </section>
       </div>
 
@@ -474,7 +545,27 @@
       if (el) el.textContent = money(p);
     });
     const count = (t) => d.spots.filter((s) => s.tier === t).length;
-    $('#tier-counts').textContent = `${count('top')} Top, ${count('mid')} Mid, ${count('low')} Low`;
+    const fmt = formatOf(d);
+    if (fmt.flat) {
+      const per = fmt.kind === 'packs' ? Math.max(Math.floor(num((d.packs || {}).per)), 1) : 1;
+      const each = r.prices[0] || 0;
+      $('#tier-counts').textContent = !d.spots.length
+        ? 'No spots yet'
+        : `${d.spots.length} spots at ${money(each)} each${per > 1 && each > 0 ? `, about $${(each / per).toFixed(2)} a pack` : ''}`;
+    } else {
+      $('#tier-counts').textContent = `${count('top')} Top, ${count('mid')} Mid, ${count('low')} Low`;
+    }
+    const packsNote = $('#packs-note');
+    if (packsNote) {
+      const box = Math.max(Math.floor(num((d.packs || {}).box)), 0);
+      const per = Math.max(Math.floor(num((d.packs || {}).per)), 1);
+      const left = box - Math.floor(box / per) * per;
+      packsNote.textContent = box < per
+        ? 'Enter how many packs are in the box.'
+        : left > 0
+          ? `${left} ${left === 1 ? 'pack is' : 'packs are'} left over and not in any spot.`
+          : 'Box sizes vary by product. Check yours.';
+    }
     $('#s-list').textContent = money(r.list);
     $('#s-profit').textContent = money(r.profit);
     $('#s-profit').className = signClass(r.profit);
@@ -1013,6 +1104,25 @@
       saveStore();
       show('planner');
     },
+    'set-format'(el) {
+      const d = store.draft;
+      const from = formatOf(d);
+      const to = FORMATS[el.dataset.format];
+      if (!to || to === from) return;
+      d.format = el.dataset.format;
+      // Teams, divisions and packs are different spot lists, so swap the list
+      // when the kind changes. Pick-your-team and random-team share one.
+      if (to.kind !== from.kind) {
+        if (to.kind === 'packs') {
+          d.packs = d.packs || { box: '36', per: '1' };
+          d.spots = packSpots(d.packs);
+        } else {
+          d.spots = spotsFrom(PRESETS[to.kind === 'divisions' ? 'Football · 8 divisions' : 'Football · 32 teams']);
+        }
+      }
+      saveStore();
+      renderPlanner();
+    },
     'cycle-tier'(el) {
       const spot = store.draft.spots[Number(el.dataset.index)];
       spot.tier = NEXT_TIER[spot.tier];
@@ -1085,7 +1195,7 @@
       store.draft = { ...newDraft(), ...plan, id: null, date: today() };
       saveStore();
       show('planner');
-      toast('Copied into the planner with the same teams and tiers.');
+      toast('Copied into the planner with the same spots.');
     },
     'go-live'(el) {
       liveBreakId = el.dataset.id;
@@ -1169,7 +1279,11 @@
     else if (t.dataset.weight) d.weights[t.dataset.weight] = t.value;
     else if (t.dataset.spotName !== undefined) d.spots[Number(t.dataset.spotName)].name = t.value;
     else if (t.dataset.check) d[t.dataset.check] = t.checked;
-    else if (t.id === 'disc') discount = Number(t.value);
+    else if (t.dataset.packs) {
+      d.packs = { box: '36', per: '1', ...(d.packs || {}), [t.dataset.packs]: t.value };
+      d.spots = packSpots(d.packs);
+      $('#spot-list').innerHTML = spotRowsHtml(d);
+    } else if (t.id === 'disc') discount = Number(t.value);
     else if (t.dataset.livePrice !== undefined) {
       const b = store.breaks.find((x) => x.id === liveBreakId);
       const sp = b && b.spots[Number(t.dataset.livePrice)];
@@ -1188,6 +1302,14 @@
     const t = e.target;
     if (t.dataset.action === 'load-template' && t.value) {
       const [kind, key] = [t.value.slice(0, t.value.indexOf(':')), t.value.slice(t.value.indexOf(':') + 1)];
+      if (kind === 'box' && BOXES[key]) {
+        store.draft.packs = { per: '1', ...(store.draft.packs || {}), box: String(BOXES[key]) };
+        if (!store.draft.product) store.draft.product = key.split(' · ')[0];
+        store.draft.spots = packSpots(store.draft.packs);
+        saveStore();
+        renderPlanner();
+        return;
+      }
       const spots = kind === 'own'
         ? (store.templates.find((x) => x.id === key) || {}).spots
         : PRESETS[key] && spotsFrom(PRESETS[key]);

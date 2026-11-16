@@ -300,6 +300,22 @@
   border-bottom: 1px solid var(--line);
 }
 
+.spot-list.is-flat .spot-row {
+  grid-template-columns: minmax(0, 1fr) 5.5ch 36px;
+}
+
+.format-pick {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.format-pick .segmented {
+  justify-self: start;
+  flex-wrap: wrap;
+  border-radius: 22px;
+}
+
 .spot-name {
   width: 100%;
   min-width: 0;
