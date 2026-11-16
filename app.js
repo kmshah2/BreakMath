@@ -243,7 +243,19 @@
   }
 
   function setPill() {
-    $('#plan-pill').textContent = paid() ? 'Pro' : SELLING || AUTH ? 'Free' : 'Early access';
+    $('#plan-pill').textContent = AUTH && !account ? 'Sign in' : paid() ? 'Pro' : SELLING || AUTH ? 'Free' : 'Early access';
+  }
+
+  // Guests can use the planner without an account. Anything that saves asks
+  // them to create one first; their draft stays in this browser meanwhile.
+  const isGuest = () => AUTH && !account;
+  let saveAfterSignIn = false;
+  let authLead = '';
+
+  function askToSignUp(lead) {
+    authLead = lead;
+    signedOutView('signup');
+    window.scrollTo(0, 0);
   }
 
   function signedOutView(mode = 'signup', message = '') {
@@ -257,7 +269,8 @@
     $('#view-auth').innerHTML = `
       <form class="auth panel" data-form="auth" data-mode="${mode}" novalidate>
         <h1>${titles[mode]}</h1>
-        ${mode === 'signup' ? `<p class="muted">Price every spot in your break and track what each one really made. Free plan saves ${FREE_BREAKS_PER_MONTH} breaks a month. No card needed.</p>` : ''}
+        ${authLead && (mode === 'signup' || mode === 'signin') ? `<p class="callout">${esc(authLead)}</p>` : ''}
+        ${mode === 'signup' ? `<p class="muted">Save your breaks and track what each one really made. Free plan saves ${FREE_BREAKS_PER_MONTH} breaks a month. No card needed.</p>` : ''}
         ${mode === 'reset' ? '<p class="muted">Enter the email you signed up with and we will send a link to set a new password.</p>' : ''}
         ${mode !== 'newpass' ? `<label class="field"><span>Email</span>
           <span class="input"><input name="email" type="email" inputmode="email" autocomplete="email" required></span></label>` : ''}
@@ -270,6 +283,7 @@
           ${mode === 'signup' ? '<button type="button" data-action="auth-mode" data-mode="signin">I already have an account</button>' : ''}
           ${mode === 'signin' ? '<button type="button" data-action="auth-mode" data-mode="signup">Create a free account</button><button type="button" data-action="auth-mode" data-mode="reset">Forgot password?</button>' : ''}
           ${mode === 'reset' ? '<button type="button" data-action="auth-mode" data-mode="signin">Back to sign in</button>' : ''}
+          ${mode !== 'newpass' ? '<button type="button" data-view="planner">Back to the planner</button>' : ''}
         </div>
         ${mode === 'signup' ? '<p class="muted small">By creating an account you agree to the <a href="terms.html">Terms</a> and <a href="privacy.html">Privacy Policy</a>.</p>' : ''}
       </form>`;
@@ -308,12 +322,17 @@
       signedOutView('signin', "Couldn't load your account. Check your connection and try again.");
       return;
     }
-    document.body.classList.remove('signed-out');
-    $('#view-auth').hidden = true;
+    authLead = '';
     setPill();
     show(location.hash.slice(1) || 'planner');
     if (window.goatcounter && window.goatcounter.count) {
       window.goatcounter.count({ path: 'signed-in', title: 'Signed in', event: true });
+    }
+    // They signed up to save the break they were pricing: save it now.
+    if (saveAfterSignIn) {
+      saveAfterSignIn = false;
+      show('planner');
+      saveBreak();
     }
   }
 
@@ -386,8 +405,20 @@
   let liveBreakId = null;
 
   function show(view) {
-    if (AUTH && !account) return; // nothing to show until someone is signed in
     if (!VIEWS.includes(view)) view = 'planner';
+    if (isGuest() && view !== 'planner') {
+      // Saved breaks, history and the plan belong to an account.
+      if (view === 'account') {
+        authLead = '';
+        signedOutView('signin');
+      } else {
+        askToSignUp('Create a free account to see your saved breaks and profit history.');
+      }
+      return;
+    }
+    if (isGuest()) saveAfterSignIn = false; // they went back to the planner instead
+    document.body.classList.remove('signed-out');
+    $('#view-auth').hidden = true;
     VIEWS.forEach((v) => {
       $(`#view-${v}`).hidden = v !== view;
     });
@@ -616,6 +647,11 @@
     }
     if (!d.spots.length) {
       toast('Add at least one spot.');
+      return;
+    }
+    if (isGuest()) {
+      saveAfterSignIn = true;
+      askToSignUp('Create a free account to save this break. Your numbers stay right here, and the break saves as soon as you are in.');
       return;
     }
     if (d.id) {
@@ -1144,6 +1180,7 @@
       names[names.length - 1].select();
     },
     'save-template'() {
+      if (isGuest()) return askToSignUp('Create a free account to save team templates.');
       if (savesLimited()) return upgradePrompt(SELLING ? 'Saving your own team templates is part of Pro.' : "Saving your own team templates is part of Pro, which isn't on sale yet.");
       const name = prompt('Name this team list', store.draft.product || 'My template');
       if (!name || !name.trim()) return;
@@ -1390,11 +1427,13 @@
             history.replaceState(null, '', location.pathname + '#account');
           }
         } else {
+          // Not signed in: open the planner as a guest.
           openFor = null;
           account = null;
           store.breaks = [];
           store.templates = [];
-          signedOutView('signup');
+          setPill();
+          show(location.hash.slice(1) || 'planner');
         }
       }, 0);
     });

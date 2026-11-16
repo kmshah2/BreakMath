@@ -5,8 +5,9 @@ window.BREAKMATH = {
   // ----- Accounts (Supabase) -----
   // Your Supabase project URL and "anon public" key. Steps are in SETUP.md.
   // While both are empty, there is no sign-in and breaks are saved in the
-  // visitor's own browser. Once set, people must sign in to use the app, their
-  // breaks are saved to their account, and the free limit is per account.
+  // visitor's own browser. Once set, anyone can price a break without an
+  // account, but saving asks them to sign up; breaks are saved to their
+  // account, and the free limit is per account.
   supabaseUrl: 'https://datmtxesbhmrafcofmra.supabase.co',
   supabaseAnonKey: 'sb_publishable_vSEuQhEjaOksWib51q3GpQ_mRUrfIN6',
 
