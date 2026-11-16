@@ -7,8 +7,8 @@ window.BREAKMATH = {
   // While both are empty, there is no sign-in and breaks are saved in the
   // visitor's own browser. Once set, people must sign in to use the app, their
   // breaks are saved to their account, and the free limit is per account.
-  supabaseUrl: '',
-  supabaseAnonKey: '',
+  supabaseUrl: 'https://datmtxesbhmrafcofmra.supabase.co',
+  supabaseAnonKey: 'sb_publishable_vSEuQhEjaOksWib51q3GpQ_mRUrfIN6',
 
   // ----- Payments (Stripe) -----
   // Stripe Payment Links for the Pro plan. Steps are in SETUP.md.
